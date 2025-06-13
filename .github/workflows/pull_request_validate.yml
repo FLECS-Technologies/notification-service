@@ -81,13 +81,3 @@ jobs:
     with:
       tag: ${{ needs.determine_tag.outputs.tag }}
       build_type: 'debug'
-  deploy:
-    needs: [ docker, determine_tag ]
-    uses: ./.github/workflows/deploy_image.yml
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-    with:
-      tag: ${{ needs.determine_tag.outputs.tag }}
