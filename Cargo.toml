@@ -1,5 +1,5 @@
 [workspace]
-members = ["notis", "template_lib"]
+members = ["notis", "notification"]
 resolver = "3"
 
 [workspace.package]

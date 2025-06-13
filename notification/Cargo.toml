@@ -1,5 +1,5 @@
 [package]
-name = "template_lib"
+name = "notification"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
