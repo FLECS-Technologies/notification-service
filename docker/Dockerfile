@@ -32,7 +32,7 @@ FROM base AS build
 
 ARG TARGET=x86_64-unknown-linux-gnu
 ARG BUILD_TYPE="debug"
-ENV CARGO_ARGS="--target ${TARGET} --path template_bin"
+ENV CARGO_ARGS="--target ${TARGET} --path notis"
 
 WORKDIR /src
 COPY . .
@@ -46,6 +46,6 @@ RUN if [ "$BUILD_TYPE" = "debug" ]; then \
 FROM debian:bookworm-slim
 ARG CARGO_HOME
 
-COPY --from=build $CARGO_HOME/bin/template_bin /
+COPY --from=build $CARGO_HOME/bin/notis /
 
-ENTRYPOINT [ "/template_bin" ]
+ENTRYPOINT [ "/notis" ]

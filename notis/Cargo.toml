@@ -1,5 +1,5 @@
 [package]
-name = "template_bin"
+name = "notis"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

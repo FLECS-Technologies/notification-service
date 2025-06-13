@@ -60,7 +60,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: "template-rs_${{ matrix.target }}"
-          path: "target/${{ matrix.target }}/debug/template_bin"
+          path: "target/${{ matrix.target }}/debug/notis"
   determine_tag:
     runs-on: ubuntu-latest
     outputs:
