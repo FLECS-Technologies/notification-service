@@ -45,18 +45,16 @@ jobs:
   build:
     name: Build application
     runs-on: ubuntu-latest
+    container: flecspublic.azurecr.io/flecs-build
     strategy:
       matrix:
         target: [ "x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu", "armv7-unknown-linux-gnueabihf" ]
     steps:
       - uses: actions/checkout@v4
       - name: Build binary
-        # houseabsolute/actions-rust-cross 1.0.4
-        uses: houseabsolute/actions-rust-cross@f7da4010930154943c99d13df0151dece91a924f
-        with:
-          command: build
-          target: ${{ matrix.target }}
-          args: "--locked --all-features"
+        run: |
+          rustup target add ${{ matrix.target }}
+          cargo build --all-features --locked --target ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:
           name: "template-rs_${{ matrix.target }}"
