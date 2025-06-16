@@ -1,4 +1,3 @@
-mod add;
 pub mod config;
+pub mod smtp;
 pub mod tracing;
-pub use add::*;

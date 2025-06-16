@@ -1,8 +1,13 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::sync::OnceLock;
-
 static CONFIG: OnceLock<Config> = OnceLock::new();
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(tag = "type")]
+pub enum NotificationService {
+    SMTP(crate::smtp::Config),
+}
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -13,14 +18,6 @@ pub enum Error {
 }
 
 pub fn init(config: Config) {
-    assert!(
-        config.default_radix >= 2,
-        "default_radix can not be smaller than 2"
-    );
-    assert!(
-        config.default_radix <= 36,
-        "default_radix can not be greater than 36"
-    );
     CONFIG.set(config).expect("Config already initialized");
 }
 
@@ -34,19 +31,19 @@ pub fn from_file<P: AsRef<Path>>(path: &P) -> Result<Config, Error> {
     Ok(config)
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct Config {
     pub trace_filter: Option<String>,
     pub port: u16,
-    pub default_radix: u32,
+    pub notification_service: NotificationService,
 }
 
-impl Default for Config {
-    fn default() -> Self {
+impl Config {
+    pub fn example() -> Self {
         Self {
-            trace_filter: None,
-            port: 23472,
-            default_radix: 10,
+            trace_filter: Some("debug".to_string()),
+            port: 80,
+            notification_service: NotificationService::SMTP(crate::smtp::Config::example()),
         }
     }
 }
