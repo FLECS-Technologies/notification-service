@@ -57,7 +57,7 @@ jobs:
           cargo build --all-features --locked --target ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:
-          name: "template-rs_${{ matrix.target }}"
+          name: "notis_${{ matrix.target }}"
           path: "target/${{ matrix.target }}/debug/notis"
   determine_tag:
     runs-on: ubuntu-latest

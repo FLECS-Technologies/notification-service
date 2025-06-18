@@ -34,12 +34,12 @@ jobs:
       - name: Build and export
         uses: docker/build-push-action@v6
         with:
-          tags: notification-service:${{ inputs.tag }}-${{ matrix.platform_short }}
-          outputs: type=docker,dest=${{ runner.temp }}/template-rs_${{ inputs.tag }}_${{ matrix.target }}.tar
+          tags: flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-${{ matrix.platform_short }}
+          outputs: type=docker,dest=${{ runner.temp }}/notis_${{ inputs.tag }}_${{ matrix.target }}.tar
           file: docker/Dockerfile
           platforms: ${{ matrix.platform }}
           build-args: BUILD_TYPE="${{ inputs.build_type }}" TARGET="${{ matrix.target }}"
       - uses: actions/upload-artifact@v4
         with:
-          name: template-rs_${{ inputs.tag }}_${{ matrix.target }}
-          path: ${{ runner.temp }}/template-rs_${{ inputs.tag }}_${{ matrix.target }}.tar
+          name: notis_${{ inputs.tag }}_${{ matrix.target }}
+          path: ${{ runner.temp }}/notis_${{ inputs.tag }}_${{ matrix.target }}.tar
