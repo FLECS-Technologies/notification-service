@@ -1,6 +1,7 @@
 name: release.yml
 on:
   release:
+    types: [ published ]
 jobs:
   build_image:
     uses: ./.github/workflows/build_image.yml
@@ -10,5 +11,6 @@ jobs:
   deploy:
     needs: [ build_image ]
     uses: ./.github/workflows/deploy_image.yml
+    secrets: inherit
     with:
       tag: ${{ github.event.release.tag_name }}
