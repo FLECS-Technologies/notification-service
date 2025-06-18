@@ -34,6 +34,12 @@ RUN mv $CARGO_HOME/bin/notis /
 
 FROM debian:bookworm-slim
 
+RUN apt-get update && \
+    apt-get --yes --no-install-recommends install \
+    ca-certificates && \
+    apt-get --yes clean && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY --from=build /notis /
 ADD ./docker/fs /
 
