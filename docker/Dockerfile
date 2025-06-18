@@ -35,5 +35,6 @@ RUN mv $CARGO_HOME/bin/notis /
 FROM debian:bookworm-slim
 
 COPY --from=build /notis /
+ADD ./docker/fs /
 
 ENTRYPOINT [ "/notis" ]
