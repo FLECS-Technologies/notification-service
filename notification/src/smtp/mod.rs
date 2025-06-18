@@ -1,7 +1,7 @@
 mod config;
 pub use config::*;
 use lettre::Transport;
-use tracing::{info, info_span};
+use tracing::{error, info, info_span};
 
 pub struct MailServer<'a> {
     config: &'a Config,
@@ -53,9 +53,12 @@ impl<'a> MailServer<'a> {
         info!("... Ok");
 
         info!("Sending email...");
-        mailer.send(&email)?;
-        info!("... Ok");
-
-        Ok(())
+        if let Err(e) = mailer.send(&email) {
+            error!("{e}");
+            Err(e.into())
+        } else {
+            info!("... Ok");
+            Ok(())
+        }
     }
 }
