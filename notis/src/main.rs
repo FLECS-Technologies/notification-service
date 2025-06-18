@@ -34,8 +34,8 @@ async fn mail_handler(
 
     let server = notification::smtp::MailServer::new_from_config(config);
     match server.send_mail(&data.subject, data.content) {
-        Ok(_) => (axum::http::StatusCode::OK, ""),
-        Err(_) => (axum::http::StatusCode::BAD_REQUEST, "Error"),
+        Ok(_) => (http::StatusCode::OK, String::new()),
+        Err(e) => (http::StatusCode::BAD_REQUEST, e.to_string()),
     }
 }
 
