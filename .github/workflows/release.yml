@@ -1,0 +1,14 @@
+name: release.yml
+on:
+  release:
+jobs:
+  build_image:
+    uses: ./.github/workflows/build_image.yml
+    with:
+      tag: ${{ github.event.release.tag_name }}
+      build_type: 'release'
+  deploy:
+    needs: [ build_image ]
+    uses: ./.github/workflows/deploy_image.yml
+    with:
+      tag: ${{ github.event.release.tag_name }}

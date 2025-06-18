@@ -1,0 +1,44 @@
+name: deploy_image.yml
+on:
+  workflow_call:
+    inputs:
+      tag:
+        type: string
+        required: true
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: notis_*
+          path: ${{ runner.temp }}
+          merge-multiple: 'true'
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: flecspublic.azurecr.io
+          username: ${{ secrets.FLECS_PUBLIC_REGISTRY_USER }}
+          password: ${{ secrets.FLECS_PUBLIC_REGISTRY_TOKEN }}
+      - name: Load and push images
+        run: |
+          docker load -i ${{ runner.temp }}/notis_${{ inputs.tag }}_x86_64-unknown-linux-gnu.tar
+          docker load -i ${{ runner.temp }}/notis_${{ inputs.tag }}_aarch64-unknown-linux-gnu.tar
+          docker load -i ${{ runner.temp }}/notis_${{ inputs.tag }}_armv7-unknown-linux-gnueabihf.tar
+
+          docker push --platform linux/amd64 ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-amd64 
+          docker push --platform linux/arm64 ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-arm64
+          docker push --platform linux/arm/v7 ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-armhf
+
+          docker manifest create ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }} \
+            ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-amd64 \
+            ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-arm64 \
+            ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-armhf
+
+          docker manifest push ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}
