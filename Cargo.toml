@@ -6,7 +6,7 @@ resolver = "3"
 edition = "2024"
 version = "0.1.0"
 authors = ["FLECS Technologies GmbH"]
-description = "A template for developing rust applications"
+description = "A FLECS app to send notifications with"
 
 [workspace.dependencies]
 anyhow = "1.0"
