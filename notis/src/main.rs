@@ -1,6 +1,11 @@
+use axum::extract::{MatchedPath, Request};
+use axum::http;
 use serde::Deserialize;
 use std::path::PathBuf;
-use tracing::info;
+use std::time::Duration;
+use tower_http::classify::ServerErrorsFailureClass;
+use tower_http::trace::DefaultOnResponse;
+use tracing::{Span, debug_span, info};
 
 const CONFIG_PATH: &str = "./config.json";
 
@@ -40,7 +45,32 @@ async fn mail_handler(
 }
 
 async fn serve() -> anyhow::Result<()> {
-    let app = axum::Router::new().route("/notifications/mail", axum::routing::post(mail_handler));
+    let app = axum::Router::new()
+        .route("/notifications", axum::routing::post(mail_handler))
+        .layer(
+            tower_http::trace::TraceLayer::new_for_http()
+                .make_span_with(|request: &Request<_>| {
+                    let matched_path = request
+                        .extensions()
+                        .get::<MatchedPath>()
+                        .map(MatchedPath::as_str);
+                    let path = request.uri().path();
+                    debug_span!(
+                        "http_request",
+                        method = ?request.method(),
+                        matched_path,
+                        path,
+                        error = tracing::field::Empty
+                    )
+                })
+                .on_request(|_: &Request<_>, _: &Span| tracing::debug!("Received request"))
+                .on_failure(
+                    |error: ServerErrorsFailureClass, _: Duration, span: &Span| {
+                        span.record("error", error.to_string());
+                    },
+                )
+                .on_response(DefaultOnResponse::default().include_headers(true)),
+        );
     let port = notification::config::get().port;
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await?;
     info!("Listening on 0.0.0.0:{port}");
