@@ -34,10 +34,18 @@ pub struct SendMailRequestBody {
 async fn mail_handler(
     axum::extract::Json(data): axum::extract::Json<SendMailRequestBody>,
 ) -> impl axum::response::IntoResponse {
-    let notification::config::NotificationService::SMTP(config) =
-        &notification::config::get().notification_service;
+    let server = match &notification::config::get().notification_service {
+        Some(notification::config::NotificationService::SMTP(config)) => {
+            notification::smtp::MailServer::new_from_config(config)
+        }
+        None => {
+            return (
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+                "No notification service configured".to_string(),
+            );
+        }
+    };
 
-    let server = notification::smtp::MailServer::new_from_config(config);
     match server.send_mail(&data.subject, data.content) {
         Ok(_) => (http::StatusCode::OK, String::new()),
         Err(e) => (http::StatusCode::BAD_REQUEST, e.to_string()),

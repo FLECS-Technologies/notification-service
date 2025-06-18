@@ -35,7 +35,7 @@ pub fn from_file<P: AsRef<Path>>(path: &P) -> Result<Config, Error> {
 pub struct Config {
     pub trace_filter: Option<String>,
     pub port: u16,
-    pub notification_service: NotificationService,
+    pub notification_service: Option<NotificationService>,
 }
 
 impl Config {
@@ -43,7 +43,7 @@ impl Config {
         Self {
             trace_filter: Some("debug".to_string()),
             port: 80,
-            notification_service: NotificationService::SMTP(crate::smtp::Config::example()),
+            notification_service: Some(NotificationService::SMTP(crate::smtp::Config::example())),
         }
     }
 }
