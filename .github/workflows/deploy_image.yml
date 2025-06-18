@@ -32,13 +32,13 @@ jobs:
           docker load -i ${{ runner.temp }}/notis_${{ inputs.tag }}_aarch64-unknown-linux-gnu.tar
           docker load -i ${{ runner.temp }}/notis_${{ inputs.tag }}_armv7-unknown-linux-gnueabihf.tar
 
-          docker push --platform linux/amd64 ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-amd64 
-          docker push --platform linux/arm64 ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-arm64
-          docker push --platform linux/arm/v7 ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-armhf
+          docker push --platform linux/amd64 flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-amd64
+          docker push --platform linux/arm64 flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-arm64
+          docker push --platform linux/arm/v7 flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-armhf
 
-          docker manifest create ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }} \
-            ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-amd64 \
-            ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-arm64 \
-            ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-armhf
+          docker manifest create flecspublic.azurecr.io/apps/notis:${{ inputs.tag }} \
+            flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-amd64 \
+            flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-arm64 \
+            flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}-armhf
 
-          docker manifest push ghcr.io/flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}
+          docker manifest push flecspublic.azurecr.io/apps/notis:${{ inputs.tag }}
