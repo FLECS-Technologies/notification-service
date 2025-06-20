@@ -561,6 +561,7 @@ dependencies = [
  "serde",
  "socket2",
  "tokio",
+ "tracing",
  "url",
 ]
 
