@@ -1,5 +1,7 @@
+use async_signal::{Signal, Signals};
 use axum::extract::{MatchedPath, Request};
 use axum::http;
+use futures_util::StreamExt;
 use serde::Deserialize;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -52,6 +54,17 @@ async fn mail_handler(
     }
 }
 
+async fn wait_for_shutdown_signal() {
+    let mut signals = Signals::new([Signal::Term, Signal::Int]).unwrap();
+    info!("Signal handler was initialized");
+    while let Some(signal) = signals.next().await {
+        info!("Received signal {signal:?}");
+        if matches!(signal, Ok(Signal::Int) | Ok(Signal::Term)) {
+            break;
+        }
+    }
+}
+
 async fn serve() -> anyhow::Result<()> {
     let app = axum::Router::new()
         .route("/notifications", axum::routing::post(mail_handler))
@@ -82,7 +95,9 @@ async fn serve() -> anyhow::Result<()> {
     let port = notification::config::get().port;
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await?;
     info!("Listening on 0.0.0.0:{port}");
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app)
+        .with_graceful_shutdown(wait_for_shutdown_signal())
+        .await?;
     Ok(())
 }
 
