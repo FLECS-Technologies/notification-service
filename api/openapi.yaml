@@ -1,0 +1,143 @@
+openapi: 3.0.0
+info:
+  title: Notis API Specification
+  description: Notis API Specification
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: 'https'
+paths:
+  '/schema/services/{service_type}/notification':
+    get:
+      tags: [ 'Schema' ]
+      summary: 'Get the schema for optional additional data on notifications for the given service type'
+      parameters:
+        - name: service_type
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "501":
+          description: 'Not Implemented'
+  '/schema/services/{service_type}/config':
+    get:
+      tags: [ 'Schema' ]
+      summary: 'Get the schema for patching the config for the given service type'
+      parameters:
+        - name: service_type
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "501":
+          description: 'Not Implemented'
+  '/services':
+    get:
+      tags: [ 'Services' ]
+      summary: 'Get a list of all registered services and their type'
+      responses:
+        "501":
+          description: 'Not Implemented'
+  '/services/{id}':
+    put:
+      tags: [ 'Services' ]
+      summary: 'Create a new notification service, or replace an existing one'
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "501":
+          description: 'Not Implemented'
+    get:
+      tags: [ 'Services' ]
+      summary: 'Get the notification service and their type'
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "501":
+          description: 'Not Implemented'
+    delete:
+      tags: [ 'Services' ]
+      summary: 'Delete the notification service'
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "501":
+          description: 'Not Implemented'
+  '/services/{id}/notifications':
+    post:
+      tags: [ 'Notifications' ]
+      summary: 'Send notification via the notification service, may contain additional options'
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "501":
+          description: 'Not Implemented'
+  '/services/{id}/config':
+    patch:
+      tags: [ 'Services' ]
+      summary: 'Manipulate the configuration of a notification service'
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "501":
+          description: 'Not Implemented'
+  '/notifications':
+    post:
+      tags: [ 'Notifications' ]
+      summary: 'Send notification via the default service'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - 'title'
+              properties:
+                title:
+                  type: string
+                  description: 'Short title of the notification'
+                content:
+                  type: string
+                  description: 'Optional content of the notification'
+              example:
+                title: 'Export #1234 is ready'
+                content: 'Your export #1234 was successfully created and can be downloaded'
+      responses:
+        '200':
+          description: 'Success'
+        '404':
+          description: 'No default service found'
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reason:
+                    type: string

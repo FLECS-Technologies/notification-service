@@ -1,3 +1,4 @@
 pub mod config;
-pub mod smtp;
+pub mod server;
+pub mod services;
 pub mod tracing;

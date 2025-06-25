@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::path::Path;
 use std::sync::OnceLock;
 static CONFIG: OnceLock<Config> = OnceLock::new();
@@ -6,7 +7,8 @@ static CONFIG: OnceLock<Config> = OnceLock::new();
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum NotificationService {
-    SMTP(crate::smtp::Config),
+    SMTP(crate::services::smtp::Config),
+    LOG(crate::services::log::Config),
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -35,7 +37,8 @@ pub fn from_file<P: AsRef<Path>>(path: &P) -> Result<Config, Error> {
 pub struct Config {
     pub trace_filter: Option<String>,
     pub port: u16,
-    pub notification_service: Option<NotificationService>,
+    pub default_notification_service: Option<String>,
+    pub notification_services: HashMap<String, NotificationService>,
 }
 
 impl Config {
@@ -43,7 +46,17 @@ impl Config {
         Self {
             trace_filter: Some("debug".to_string()),
             port: 80,
-            notification_service: Some(NotificationService::SMTP(crate::smtp::Config::example())),
+            default_notification_service: Some("smtp".to_string()),
+            notification_services: HashMap::from([
+                (
+                    "smtp".to_string(),
+                    NotificationService::SMTP(crate::services::smtp::Config::example()),
+                ),
+                (
+                    "log".to_string(),
+                    NotificationService::LOG(crate::services::log::Config::example()),
+                ),
+            ]),
         }
     }
 }
