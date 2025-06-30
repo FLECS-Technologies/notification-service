@@ -7,6 +7,7 @@ edition = "2024"
 version = "0.1.0"
 authors = ["FLECS Technologies GmbH"]
 description = "A FLECS app to send notifications with"
+license = "Apache-2.0"
 
 [workspace.dependencies]
 anyhow = "1.0"
