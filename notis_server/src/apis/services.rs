@@ -15,6 +15,8 @@ pub enum DefaultServiceDeleteResponse {
     Status200_Success,
     /// No default service registered
     Status404_NoDefaultServiceRegistered,
+    /// Internal Server Error
+    Status500_InternalServerError(models::Reason),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -37,6 +39,8 @@ pub enum DefaultServicePostResponse {
     Status201_DefaultServiceWasSet,
     /// Service not found
     Status404_ServiceNotFound,
+    /// Internal Server Error
+    Status500_InternalServerError(models::Reason),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -64,9 +68,11 @@ pub enum ServicesIdConfigPatchResponse {
     /// Success
     Status200_Success,
     /// Bad Request
-    Status400_BadRequest(models::ServicesIdPut400Response),
+    Status400_BadRequest(models::Reason),
     /// Service not found
     Status404_ServiceNotFound,
+    /// Internal Server Error
+    Status500_InternalServerError(models::Reason),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -87,6 +93,8 @@ pub enum ServicesIdDeleteResponse {
     Status200_Success,
     /// Service not found
     Status404_ServiceNotFound,
+    /// Internal Server Error
+    Status500_InternalServerError(models::Reason),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -118,9 +126,9 @@ pub enum ServicesIdPutResponse {
     /// Service was created
     Status201_ServiceWasCreated,
     /// Bad Request
-    Status400_BadRequest(models::ServicesIdPut400Response),
+    Status400_BadRequest(models::Reason),
     /// Internal Server Error
-    Status500_InternalServerError(models::ServicesIdPut400Response),
+    Status500_InternalServerError(models::Reason),
 }
 
 /// Services

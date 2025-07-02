@@ -2,6 +2,7 @@ pub mod config;
 pub mod notifications;
 
 use crate::config::{Config, NotificationService};
+use crate::server::reason;
 use notis_server::apis::services::{
     ServicesIdDeleteResponse as DeleteResponse, ServicesIdGetResponse as GetResponse,
     ServicesIdPutResponse as PutResponse,
@@ -39,9 +40,9 @@ pub fn put(config: &mut Config, path_params: PutPathParams, request: PutRequest)
         "smtp" => serde_json::from_value(request.config.0).map(NotificationService::SMTP),
         "log" => serde_json::from_value(request.config.0).map(NotificationService::LOG),
         t => {
-            return PutResponse::Status400_BadRequest(models::ServicesIdPut400Response {
-                reason: Some(format!("Unknown notification service type '{t}'")),
-            });
+            return PutResponse::Status400_BadRequest(reason(format!(
+                "Unknown notification service type '{t}'"
+            )));
         }
     };
     match service {
@@ -56,8 +57,6 @@ pub fn put(config: &mut Config, path_params: PutPathParams, request: PutRequest)
                 PutResponse::Status201_ServiceWasCreated
             }
         }
-        Err(e) => PutResponse::Status400_BadRequest(models::ServicesIdPut400Response {
-            reason: Some(format!("Invalid config: {e}")),
-        }),
+        Err(e) => PutResponse::Status400_BadRequest(reason(format!("Invalid config: {e}"))),
     }
 }

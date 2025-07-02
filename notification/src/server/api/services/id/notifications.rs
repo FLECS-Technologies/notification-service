@@ -1,6 +1,6 @@
+use crate::server::reason;
 use crate::{Error, config};
 use notis_server::apis::notifications::ServicesIdNotificationsPostResponse as PostResponse;
-use notis_server::models;
 use notis_server::models::{
     ServicesIdNotificationsPostPathParams as PostPathParams,
     ServicesIdNotificationsPostRequest as PostRequest,
@@ -23,12 +23,8 @@ pub fn post(
     ) {
         Ok(_) => PostResponse::Status200_Success,
         Err(e @ Error::Serde(_)) => {
-            PostResponse::Status400_BadRequest(models::ServicesIdPut400Response {
-                reason: Some(format!("Invalid options: {e}")),
-            })
+            PostResponse::Status400_BadRequest(reason(format!("Invalid options: {e}")))
         }
-        Err(e) => PostResponse::Status500_InternalServerError(models::ServicesIdPut400Response {
-            reason: Some(e.to_string()),
-        }),
+        Err(e) => PostResponse::Status500_InternalServerError(reason(e.to_string())),
     }
 }

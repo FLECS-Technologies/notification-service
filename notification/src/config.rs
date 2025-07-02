@@ -4,7 +4,18 @@ use crate::services::smtp::MailServer;
 use schemars::schema_for;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+const DEFAULT_CONFIG_PATH: &str = "./config.json";
+const CONFIG_PATH_ENV: &str = "NOTIS_CONFIG_PATH";
+
+pub fn config_path() -> PathBuf {
+    PathBuf::from(
+        std::env::var(CONFIG_PATH_ENV)
+            .as_deref()
+            .unwrap_or(DEFAULT_CONFIG_PATH),
+    )
+}
 
 pub trait NotificationServiceConfig: schemars::JsonSchema {
     type Patch: schemars::JsonSchema;
@@ -17,7 +28,7 @@ pub trait NotificationServiceConfig: schemars::JsonSchema {
     fn apply_patch(&mut self, patch: Self::Patch);
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum NotificationService {
     SMTP(crate::services::smtp::Config),
@@ -75,11 +86,13 @@ pub fn from_file<P: AsRef<Path>>(path: &P) -> Result<Config, Error> {
     Ok(config)
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 pub struct Config {
     pub trace_filter: Option<String>,
     pub port: u16,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_notification_service: Option<String>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub notification_services: HashMap<String, NotificationService>,
 }
 

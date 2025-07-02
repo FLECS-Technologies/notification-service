@@ -8,14 +8,12 @@ use tower_http::classify::ServerErrorsFailureClass;
 use tower_http::trace::DefaultOnResponse;
 use tracing::{Span, debug_span, info};
 
-const CONFIG_PATH: &str = "./config.json";
-
 fn init() -> anyhow::Result<notification::config::Config> {
-    let config_path = PathBuf::from(CONFIG_PATH);
+    let config_path = notification::config::config_path();
     let config = notification::config::from_file(&config_path).map_err(|e| {
         anyhow::anyhow!(
             "Error reading config: '{e}'\n\
-            Make sure there is a valid config at {CONFIG_PATH}, example:\n{}",
+            Make sure there is a valid config at {config_path:?}, example:\n{}",
             serde_json::to_string_pretty(&notification::config::Config::example()).unwrap()
         )
     })?;
@@ -36,9 +34,12 @@ async fn wait_for_shutdown_signal() {
     }
 }
 
-async fn serve(config: notification::config::Config) -> anyhow::Result<()> {
+async fn serve(config: notification::config::Config, config_path: PathBuf) -> anyhow::Result<()> {
     let port = config.port;
-    let app = notis_server::server::new(Arc::new(notification::server::Server::new(config)));
+    let app = notis_server::server::new(Arc::new(notification::server::Server::new(
+        config,
+        config_path,
+    )));
     let app = app.layer(
         tower_http::trace::TraceLayer::new_for_http()
             .make_span_with(|request: &Request<_>| {
@@ -74,5 +75,5 @@ async fn serve(config: notification::config::Config) -> anyhow::Result<()> {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let config = init()?;
-    serve(config).await
+    serve(config, notification::config::config_path()).await
 }
