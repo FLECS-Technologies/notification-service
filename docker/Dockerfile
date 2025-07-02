@@ -34,6 +34,8 @@ RUN mv $CARGO_HOME/bin/notis /
 
 FROM debian:bookworm-slim
 
+ENV NOTIS_CONFIG_PATH="/config.json"
+
 RUN apt-get update && \
     apt-get --yes --no-install-recommends install \
     ca-certificates && \

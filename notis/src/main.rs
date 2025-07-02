@@ -1,6 +1,7 @@
 use async_signal::{Signal, Signals};
 use axum::extract::{MatchedPath, Request};
 use futures_util::StreamExt;
+use std::io::ErrorKind;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
@@ -10,13 +11,23 @@ use tracing::{Span, debug_span, info};
 
 fn init() -> anyhow::Result<notification::config::Config> {
     let config_path = notification::config::config_path();
-    let config = notification::config::from_file(&config_path).map_err(|e| {
-        anyhow::anyhow!(
+    let config = match notification::config::from_file(&config_path) {
+        Ok(config) => config,
+        Err(notification::config::Error::IO(e)) if e.kind() == ErrorKind::NotFound => {
+            let config = notification::config::Config::default();
+            if let Some(parent) = config_path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            serde_json::to_writer_pretty(std::fs::File::create_new(&config_path)?, &config)?;
+            info!("Created default config file at {config_path:?}, as it did not exist");
+            config
+        }
+        Err(e) => anyhow::bail!(
             "Error reading config: '{e}'\n\
-            Make sure there is a valid config at {config_path:?}, example:\n{}",
-            serde_json::to_string_pretty(&notification::config::Config::example()).unwrap()
-        )
-    })?;
+            Make sure there is a valid and accessible config at {config_path:?}, example:\n{}",
+            serde_json::to_string_pretty(&notification::config::Config::example())?
+        ),
+    };
 
     notification::tracing::init(&config);
 
