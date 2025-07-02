@@ -9,7 +9,7 @@ license.workspace = true
 [dependencies]
 anyhow.workspace = true
 tracing.workspace = true
-notification = { path = "../notification", version = "0.1.0" }
+notification = { path = "../notification", version = "0.2.0" }
 axum = "0.7"
 axum-extra = "0.9"
 tokio = { version = "1.45", features = ["macros", "rt-multi-thread"] }
