@@ -16,3 +16,6 @@ lettre = { version = "0.11.17", features = ["default", "serde", "tracing"] }
 axum = "0.7"
 axum-extra = "0.9"
 notis_server = { path = "../notis_server", version = "0.1.0" }
+schemars = "1.0.1"
+serde_with = "3.13.0"
+erased-serde = "0.4.6"

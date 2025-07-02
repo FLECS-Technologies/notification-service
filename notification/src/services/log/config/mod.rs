@@ -1,3 +1,5 @@
+use crate::config::NotificationServiceConfig;
+use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 fn serialize_level<S>(level: &tracing::log::Level, serializer: S) -> Result<S::Ok, S::Error>
@@ -13,7 +15,7 @@ where
     Ok(Level::deserialize(deserializer)?.into())
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 enum Level {
     Error = 1,
     Warn,
@@ -46,12 +48,13 @@ impl From<Level> for tracing::log::Level {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 pub struct Config {
     #[serde(
         serialize_with = "serialize_level",
         deserialize_with = "deserialize_level"
     )]
+    #[schemars(with = "Level")]
     pub level: tracing::log::Level,
 }
 
@@ -60,5 +63,13 @@ impl Config {
         Self {
             level: tracing::log::Level::Info,
         }
+    }
+}
+
+impl NotificationServiceConfig for Config {
+    type Patch = Config;
+
+    fn apply_patch(&mut self, patch: Config) {
+        self.level = patch.level
     }
 }

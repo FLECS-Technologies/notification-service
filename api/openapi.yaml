@@ -9,39 +9,67 @@ info:
 servers:
   - url: 'https'
 paths:
-  '/schema/services/{service_type}/notification':
+  '/default_service':
     get:
-      tags: [ 'Schema' ]
-      summary: 'Get the schema for optional additional data on notifications for the given service type'
-      parameters:
-        - name: service_type
-          in: path
-          schema:
-            type: string
-          required: true
+      tags: [ 'Services' ]
+      summary: 'Get the default service and its type'
       responses:
-        "501":
-          description: 'Not Implemented'
-  '/schema/services/{service_type}/config':
-    get:
-      tags: [ 'Schema' ]
-      summary: 'Get the schema for patching the config for the given service type'
-      parameters:
-        - name: service_type
-          in: path
-          schema:
-            type: string
-          required: true
+        '200':
+          description: 'Success'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                required: [ 'id', 'type' ]
+        '404':
+          description: 'No default service registered'
+    delete:
+      tags: [ 'Services' ]
+      summary: 'Remove the reference to the default service'
       responses:
-        "501":
-          description: 'Not Implemented'
+        '200':
+          description: 'Success'
+        '404':
+          description: 'No default service registered'
+    post:
+      tags: [ 'Services' ]
+      summary: 'Set the default service'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+              required: [ 'id' ]
+      responses:
+        '200':
+          description: 'Default service was replaced'
+        '201':
+          description: 'Default service was set'
+        '404':
+          description: 'Service not found'
   '/services':
     get:
       tags: [ 'Services' ]
-      summary: 'Get a list of all registered services and their type'
+      summary: 'Get a list of all registered services, their type and the default service'
       responses:
-        "501":
-          description: 'Not Implemented'
+        '200':
+          description: 'Success'
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+                description: 'A map of service ids to their type'
   '/services/{id}':
     put:
       tags: [ 'Services' ]
@@ -52,9 +80,41 @@ paths:
           schema:
             type: string
           required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                config:
+                  type: object
+              required: [ 'type', 'config' ]
       responses:
-        "501":
-          description: 'Not Implemented'
+        '200':
+          description: 'Service was replaced'
+        '201':
+          description: 'Service was created'
+        '400':
+          description: 'Bad Request'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reason:
+                    type: string
+        '500':
+          description: 'Internal Server Error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reason:
+                    type: string
     get:
       tags: [ 'Services' ]
       summary: 'Get the notification service and their type'
@@ -65,8 +125,21 @@ paths:
             type: string
           required: true
       responses:
-        "501":
-          description: 'Not Implemented'
+        '200':
+          description: 'Success'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  id:
+                    type: string
+                required: [ 'type', 'id' ]
+        '404':
+          description: 'Service not found'
+
     delete:
       tags: [ 'Services' ]
       summary: 'Delete the notification service'
@@ -77,8 +150,10 @@ paths:
             type: string
           required: true
       responses:
-        "501":
-          description: 'Not Implemented'
+        '200':
+          description: 'Success'
+        '404':
+          description: 'Service not found'
   '/services/{id}/notifications':
     post:
       tags: [ 'Notifications' ]
@@ -89,9 +164,65 @@ paths:
           schema:
             type: string
           required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                options:
+                  type: object
+                  description: 'Optional options for the notification'
+                title:
+                  type: string
+                  description: 'Short title of the notification'
+                content:
+                  type: string
+                  description: 'Optional content of the notification'
+              required: [ 'title' ]
       responses:
-        "501":
-          description: 'Not Implemented'
+        '200':
+          description: Success
+        '400':
+          description: 'Bad Request'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reason:
+                    type: string
+        '404':
+          description: 'Service not found'
+        '500':
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reason:
+                    type: string
+  '/services/{id}/notifications/schema':
+    get:
+      tags: [ 'Services' ]
+      summary: 'Get the schema for sending notifications via the notification service'
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: 'Service not found'
   '/services/{id}/config':
     patch:
       tags: [ 'Services' ]
@@ -102,9 +233,68 @@ paths:
           schema:
             type: string
           required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
-        "501":
-          description: 'Not Implemented'
+        '200':
+          description: 'Success'
+        '400':
+          description: 'Bad Request'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reason:
+                    type: string
+        '404':
+          description: 'Service not found'
+    get:
+      tags: [ 'Services' ]
+      summary: 'Get the configuration of a notification service'
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: 'Service not found'
+  '/services/{id}/config/schema':
+    get:
+      tags: [ 'Services' ]
+      summary: 'Get the configuration schema of a notification service'
+      parameters:
+        - name: id
+          in: path
+          schema:
+            type: string
+          required: true
+        - name: patch
+          in: query
+          schema:
+            type: boolean
+          required: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: 'Service not found'
   '/notifications':
     post:
       tags: [ 'Notifications' ]
@@ -115,8 +305,6 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - 'title'
               properties:
                 title:
                   type: string
@@ -124,6 +312,8 @@ paths:
                 content:
                   type: string
                   description: 'Optional content of the notification'
+              required:
+                - 'title'
               example:
                 title: 'Export #1234 is ready'
                 content: 'Your export #1234 was successfully created and can be downloaded'

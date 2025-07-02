@@ -16,15 +16,21 @@ pub enum NotificationsPostResponse {
     /// No default service found
     Status404_NoDefaultServiceFound,
     /// Internal server error
-    Status500_InternalServerError(models::NotificationsPost500Response),
+    Status500_InternalServerError(models::ServicesIdPut400Response),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[must_use]
 #[allow(clippy::large_enum_variant)]
 pub enum ServicesIdNotificationsPostResponse {
-    /// Not Implemented
-    Status501_NotImplemented,
+    /// Success
+    Status200_Success,
+    /// Bad Request
+    Status400_BadRequest(models::ServicesIdPut400Response),
+    /// Service not found
+    Status404_ServiceNotFound,
+    /// Internal server error
+    Status500_InternalServerError(models::ServicesIdPut400Response),
 }
 
 /// Notifications
@@ -51,5 +57,6 @@ pub trait Notifications {
         host: Host,
         cookies: CookieJar,
         path_params: models::ServicesIdNotificationsPostPathParams,
+        body: models::ServicesIdNotificationsPostRequest,
     ) -> Result<ServicesIdNotificationsPostResponse, ()>;
 }

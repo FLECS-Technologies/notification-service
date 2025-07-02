@@ -10,7 +10,7 @@ use tracing::{Span, debug_span, info};
 
 const CONFIG_PATH: &str = "./config.json";
 
-fn init() -> anyhow::Result<()> {
+fn init() -> anyhow::Result<notification::config::Config> {
     let config_path = PathBuf::from(CONFIG_PATH);
     let config = notification::config::from_file(&config_path).map_err(|e| {
         anyhow::anyhow!(
@@ -20,10 +20,9 @@ fn init() -> anyhow::Result<()> {
         )
     })?;
 
-    notification::config::init(config);
-    notification::tracing::init();
+    notification::tracing::init(&config);
 
-    Ok(())
+    Ok(config)
 }
 
 async fn wait_for_shutdown_signal() {
@@ -37,8 +36,9 @@ async fn wait_for_shutdown_signal() {
     }
 }
 
-async fn serve() -> anyhow::Result<()> {
-    let app = notis_server::server::new(Arc::new(notification::server::Server {}));
+async fn serve(config: notification::config::Config) -> anyhow::Result<()> {
+    let port = config.port;
+    let app = notis_server::server::new(Arc::new(notification::server::Server::new(config)));
     let app = app.layer(
         tower_http::trace::TraceLayer::new_for_http()
             .make_span_with(|request: &Request<_>| {
@@ -63,7 +63,6 @@ async fn serve() -> anyhow::Result<()> {
             )
             .on_response(DefaultOnResponse::default().include_headers(true)),
     );
-    let port = notification::config::get().port;
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await?;
     info!("Listening on 0.0.0.0:{port}");
     axum::serve(listener, app)
@@ -74,6 +73,6 @@ async fn serve() -> anyhow::Result<()> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    init()?;
-    serve().await
+    let config = init()?;
+    serve(config).await
 }
