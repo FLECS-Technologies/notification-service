@@ -6,14 +6,13 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-const DEFAULT_CONFIG_PATH: &str = "./config.json";
 const CONFIG_PATH_ENV: &str = "NOTIS_CONFIG_PATH";
-
+const DEFAULT_PORT: u16 = 15825;
 pub fn config_path() -> PathBuf {
     PathBuf::from(
         std::env::var(CONFIG_PATH_ENV)
             .as_deref()
-            .unwrap_or(DEFAULT_CONFIG_PATH),
+            .unwrap_or_else(|_| panic!("Environment variable {CONFIG_PATH_ENV} is not set")),
     )
 }
 
@@ -94,6 +93,17 @@ pub struct Config {
     pub default_notification_service: Option<String>,
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub notification_services: HashMap<String, NotificationService>,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            port: DEFAULT_PORT,
+            notification_services: Default::default(),
+            default_notification_service: Default::default(),
+            trace_filter: Default::default(),
+        }
+    }
 }
 
 impl Config {
