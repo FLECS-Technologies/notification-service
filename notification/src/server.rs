@@ -11,6 +11,7 @@ use notis_server::apis::services::{
     ServicesIdConfigSchemaGetResponse, ServicesIdDeleteResponse, ServicesIdGetResponse,
     ServicesIdNotificationsSchemaGetResponse, ServicesIdPutResponse,
 };
+use notis_server::models;
 use notis_server::models::{
     DefaultServicePostRequest, NotificationsPostRequest, ServicesIdConfigGetPathParams,
     ServicesIdConfigPatchPathParams, ServicesIdConfigSchemaGetPathParams,
@@ -19,16 +20,57 @@ use notis_server::models::{
     ServicesIdNotificationsSchemaGetPathParams, ServicesIdPutPathParams, ServicesIdPutRequest,
 };
 use notis_server::types::Object;
-use std::sync::{Arc, RwLock};
+use std::fmt::Display;
+use std::ops::Deref;
+use std::path::{Path, PathBuf};
+use std::sync::{Arc, RwLock, RwLockWriteGuard};
+
+fn reason(reason: impl Display) -> models::Reason {
+    models::Reason {
+        reason: Some(reason.to_string()),
+    }
+}
 
 pub struct Server {
     config: Arc<RwLock<crate::config::Config>>,
+    config_path: PathBuf,
+}
+
+pub struct ConfigWriter<'a> {
+    lock: RwLockWriteGuard<'a, crate::config::Config>,
+    config_path: &'a Path,
+    pub new_config: crate::config::Config,
+}
+
+impl ConfigWriter<'_> {
+    pub fn write_config(mut self) -> std::io::Result<bool> {
+        if self.new_config != *self.lock {
+            serde_json::to_writer_pretty(
+                std::fs::File::create(self.config_path)?,
+                &self.new_config,
+            )?;
+            *self.lock = self.new_config.clone();
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+    }
 }
 
 impl Server {
-    pub fn new(config: crate::config::Config) -> Self {
+    pub fn new(config: crate::config::Config, config_path: PathBuf) -> Self {
         Self {
             config: Arc::new(RwLock::new(config)),
+            config_path,
+        }
+    }
+
+    pub fn config_writer(&self) -> ConfigWriter {
+        let lock = self.config.write().unwrap_or_else(|e| e.into_inner());
+        ConfigWriter {
+            new_config: lock.deref().clone(),
+            lock,
+            config_path: self.config_path.as_path(),
         }
     }
 }
@@ -41,8 +83,12 @@ impl notis_server::apis::services::Services for Server {
         _host: axum::extract::Host,
         _cookies: axum_extra::extract::cookie::CookieJar,
     ) -> Result<DefaultServiceDeleteResponse, ()> {
-        let mut config = self.config.write().unwrap();
-        Ok(api::default_service::delete(&mut config))
+        let mut config_writer = self.config_writer();
+        let result = api::default_service::delete(&mut config_writer.new_config);
+        Ok(match config_writer.write_config() {
+            Err(e) => DefaultServiceDeleteResponse::Status500_InternalServerError(reason(e)),
+            Ok(_) => result,
+        })
     }
 
     async fn default_service_get(
@@ -62,8 +108,12 @@ impl notis_server::apis::services::Services for Server {
         _cookies: axum_extra::extract::cookie::CookieJar,
         body: DefaultServicePostRequest,
     ) -> Result<DefaultServicePostResponse, ()> {
-        let mut config = self.config.write().unwrap();
-        Ok(api::default_service::post(&mut config, body))
+        let mut config_writer = self.config_writer();
+        let result = api::default_service::post(&mut config_writer.new_config, body);
+        Ok(match config_writer.write_config() {
+            Err(e) => DefaultServicePostResponse::Status500_InternalServerError(reason(e)),
+            Ok(_) => result,
+        })
     }
 
     async fn services_get(
@@ -95,12 +145,13 @@ impl notis_server::apis::services::Services for Server {
         path_params: ServicesIdConfigPatchPathParams,
         body: Object,
     ) -> Result<ServicesIdConfigPatchResponse, ()> {
-        let mut config = self.config.write().unwrap();
-        Ok(api::services::id::config::patch(
-            &mut config,
-            path_params,
-            body,
-        ))
+        let mut config_writer = self.config_writer();
+        let result =
+            api::services::id::config::patch(&mut config_writer.new_config, path_params, body);
+        Ok(match config_writer.write_config() {
+            Err(e) => ServicesIdConfigPatchResponse::Status500_InternalServerError(reason(e)),
+            Ok(_) => result,
+        })
     }
 
     async fn services_id_config_schema_get(
@@ -126,8 +177,12 @@ impl notis_server::apis::services::Services for Server {
         _cookies: axum_extra::extract::cookie::CookieJar,
         path_params: ServicesIdDeletePathParams,
     ) -> Result<ServicesIdDeleteResponse, ()> {
-        let mut config = self.config.write().unwrap();
-        Ok(api::services::id::delete(&mut config, path_params))
+        let mut config_writer = self.config_writer();
+        let result = api::services::id::delete(&mut config_writer.new_config, path_params);
+        Ok(match config_writer.write_config() {
+            Err(e) => ServicesIdDeleteResponse::Status500_InternalServerError(reason(e)),
+            Ok(_) => result,
+        })
     }
 
     async fn services_id_get(
@@ -163,8 +218,12 @@ impl notis_server::apis::services::Services for Server {
         path_params: ServicesIdPutPathParams,
         body: ServicesIdPutRequest,
     ) -> Result<ServicesIdPutResponse, ()> {
-        let mut config = self.config.write().unwrap();
-        Ok(api::services::id::put(&mut config, path_params, body))
+        let mut config_writer = self.config_writer();
+        let result = api::services::id::put(&mut config_writer.new_config, path_params, body);
+        Ok(match config_writer.write_config() {
+            Err(e) => ServicesIdPutResponse::Status500_InternalServerError(reason(e)),
+            Ok(_) => result,
+        })
     }
 }
 

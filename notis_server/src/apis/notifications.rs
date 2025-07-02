@@ -15,8 +15,8 @@ pub enum NotificationsPostResponse {
     Status200_Success,
     /// No default service found
     Status404_NoDefaultServiceFound,
-    /// Internal server error
-    Status500_InternalServerError(models::ServicesIdPut400Response),
+    /// Internal Server Error
+    Status500_InternalServerError(models::Reason),
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
@@ -26,11 +26,11 @@ pub enum ServicesIdNotificationsPostResponse {
     /// Success
     Status200_Success,
     /// Bad Request
-    Status400_BadRequest(models::ServicesIdPut400Response),
+    Status400_BadRequest(models::Reason),
     /// Service not found
     Status404_ServiceNotFound,
-    /// Internal server error
-    Status500_InternalServerError(models::ServicesIdPut400Response),
+    /// Internal Server Error
+    Status500_InternalServerError(models::Reason),
 }
 
 /// Notifications

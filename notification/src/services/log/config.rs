@@ -48,7 +48,7 @@ impl From<Level> for tracing::log::Level {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct Config {
     #[serde(
         serialize_with = "serialize_level",

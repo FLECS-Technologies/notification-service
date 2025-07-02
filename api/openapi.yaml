@@ -8,6 +8,26 @@ info:
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 servers:
   - url: 'https'
+components:
+  schemas:
+    reason:
+      type: object
+      properties:
+        reason:
+          type: string
+  responses:
+    500:
+      description: 'Internal Server Error'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/reason'
+    400:
+      description: 'Bad Request'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/reason'
 paths:
   '/default_service':
     get:
@@ -36,6 +56,8 @@ paths:
           description: 'Success'
         '404':
           description: 'No default service registered'
+        '500':
+          $ref: '#/components/responses/500'
     post:
       tags: [ 'Services' ]
       summary: 'Set the default service'
@@ -56,6 +78,8 @@ paths:
           description: 'Default service was set'
         '404':
           description: 'Service not found'
+        '500':
+          $ref: '#/components/responses/500'
   '/services':
     get:
       tags: [ 'Services' ]
@@ -98,23 +122,9 @@ paths:
         '201':
           description: 'Service was created'
         '400':
-          description: 'Bad Request'
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  reason:
-                    type: string
+          $ref: '#/components/responses/400'
         '500':
-          description: 'Internal Server Error'
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  reason:
-                    type: string
+          $ref: '#/components/responses/500'
     get:
       tags: [ 'Services' ]
       summary: 'Get the notification service and their type'
@@ -154,6 +164,8 @@ paths:
           description: 'Success'
         '404':
           description: 'Service not found'
+        '500':
+          $ref: '#/components/responses/500'
   '/services/{id}/notifications':
     post:
       tags: [ 'Notifications' ]
@@ -185,25 +197,11 @@ paths:
         '200':
           description: Success
         '400':
-          description: 'Bad Request'
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  reason:
-                    type: string
+          $ref: '#/components/responses/400'
         '404':
           description: 'Service not found'
         '500':
-          description: 'Internal server error'
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  reason:
-                    type: string
+          $ref: '#/components/responses/500'
   '/services/{id}/notifications/schema':
     get:
       tags: [ 'Services' ]
@@ -243,16 +241,11 @@ paths:
         '200':
           description: 'Success'
         '400':
-          description: 'Bad Request'
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  reason:
-                    type: string
+          $ref: '#/components/responses/400'
         '404':
           description: 'Service not found'
+        '500':
+          $ref: '#/components/responses/500'
     get:
       tags: [ 'Services' ]
       summary: 'Get the configuration of a notification service'
@@ -323,11 +316,4 @@ paths:
         '404':
           description: 'No default service found'
         '500':
-          description: 'Internal server error'
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  reason:
-                    type: string
+          $ref: '#/components/responses/500'

@@ -27,9 +27,7 @@ pub trait NotificationService {
         title: &str,
         content: Option<&str>,
     ) -> Result<(), crate::Error> {
-        let options = options
-            .map(serde_json::from_value)
-            .transpose()?;
+        let options = options.map(serde_json::from_value).transpose()?;
         self.send_notification(options, config, title, content)
     }
 }

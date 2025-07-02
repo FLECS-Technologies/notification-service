@@ -6,14 +6,14 @@ pub use patch::ConfigPatch;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
 pub enum ConnectionType {
     Tls,
     StartTls,
     PlainUnsecure,
 }
 
-#[derive(Debug, Deserialize, Serialize, JsonSchema)]
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct Config {
     pub server_url: String,
     #[schemars(with = "schema::Credentials")]
