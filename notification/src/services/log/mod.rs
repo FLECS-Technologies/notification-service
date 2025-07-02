@@ -1,21 +1,29 @@
 mod config;
 
+use crate::Error;
+use crate::services::NotificationService;
 pub use config::Config;
 use tracing::log::log;
 
-pub struct Logger<'a> {
-    config: &'a Config,
-}
+#[derive(Default)]
+pub struct Logger;
 
-impl<'a> Logger<'a> {
-    pub fn new(config: &'a Config) -> Self {
-        Self { config }
-    }
+impl NotificationService for Logger {
+    type Config = Config;
+    type NotificationOptions = Config;
 
-    pub fn log(&self, topic: &str, content: Option<&str>) {
+    fn send_notification(
+        &self,
+        options: Option<Self::NotificationOptions>,
+        config: &Self::Config,
+        title: &str,
+        content: Option<&str>,
+    ) -> Result<(), Error> {
+        let level = options.map(|config| config.level).unwrap_or(config.level);
         match content {
-            Some(content) => log!(self.config.level, "{topic}: {content}"),
-            None => log!(self.config.level, "{topic}"),
+            Some(content) => log!(level, "{title}: {content}"),
+            None => log!(level, "{title}"),
         }
+        Ok(())
     }
 }

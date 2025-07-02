@@ -1,18 +1,42 @@
+mod patch;
+mod schema;
+
+use crate::config::NotificationServiceConfig;
+pub use patch::ConfigPatch;
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize, JsonSchema)]
 pub enum ConnectionType {
     Tls,
     StartTls,
+    PlainUnsecure,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, JsonSchema)]
 pub struct Config {
     pub server_url: String,
+    #[schemars(with = "schema::Credentials")]
     pub credentials: lettre::transport::smtp::authentication::Credentials,
     pub connection_type: ConnectionType,
-    pub sender: lettre::message::Mailbox,
-    pub receivers: Vec<lettre::message::Mailbox>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(with = "Option<schema::Mechanism>")]
+    pub auth_mechanism: Option<lettre::transport::smtp::authentication::Mechanism>,
+    pub sender: Mailbox,
+    pub receivers: Vec<Mailbox>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, JsonSchema)]
+pub struct Mailbox {
+    pub name: Option<String>,
+    #[schemars(email, with = "String")]
+    pub email: lettre::Address,
+}
+
+impl From<Mailbox> for lettre::message::Mailbox {
+    fn from(value: Mailbox) -> Self {
+        lettre::message::Mailbox::new(value.name, value.email)
+    }
 }
 
 impl Config {
@@ -23,21 +47,47 @@ impl Config {
                 "my_user".to_string(),
                 "my_password".to_string(),
             ),
+            auth_mechanism: Some(lettre::transport::smtp::authentication::Mechanism::Login),
             connection_type: ConnectionType::Tls,
-            sender: lettre::message::Mailbox::new(
-                Some("Alice".to_string()),
-                lettre::Address::new("alice", "mail.com").unwrap(),
-            ),
+            sender: Mailbox {
+                name: Some("Alice".to_string()),
+                email: lettre::Address::new("alice", "mail.com").unwrap(),
+            },
             receivers: vec![
-                lettre::message::Mailbox::new(
-                    Some("Bob".to_string()),
-                    lettre::Address::new("bob", "bob-self-hosting.com").unwrap(),
-                ),
-                lettre::message::Mailbox::new(
-                    Some("Charlie".to_string()),
-                    lettre::Address::new("charlie", "mail.ca").unwrap(),
-                ),
+                Mailbox {
+                    name: Some("Bob".to_string()),
+                    email: lettre::Address::new("bob", "bob-self-hosting.com").unwrap(),
+                },
+                Mailbox {
+                    name: Some("Charlie".to_string()),
+                    email: lettre::Address::new("charlie", "mail.ca").unwrap(),
+                },
             ],
+        }
+    }
+}
+
+impl NotificationServiceConfig for Config {
+    type Patch = ConfigPatch;
+
+    fn apply_patch(&mut self, patch: ConfigPatch) {
+        if let Some(server_url) = patch.server_url {
+            self.server_url = server_url;
+        }
+        if let Some(credentials) = patch.credentials {
+            self.credentials = credentials;
+        }
+        if let Some(auth_mechanism) = patch.auth_mechanism {
+            self.auth_mechanism = auth_mechanism;
+        }
+        if let Some(connection_type) = patch.connection_type {
+            self.connection_type = connection_type;
+        }
+        if let Some(sender) = patch.sender {
+            self.sender = sender;
+        }
+        if let Some(receivers) = patch.receivers {
+            self.receivers = receivers;
         }
     }
 }
