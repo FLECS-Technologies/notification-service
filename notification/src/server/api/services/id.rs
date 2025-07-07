@@ -1,8 +1,9 @@
 pub mod config;
 pub mod notifications;
 
-use crate::config::{Config, NotificationService};
+use crate::config::Config;
 use crate::server::reason;
+use crate::services::NotisNotificationService;
 use notis_server::apis::services::{
     ServicesIdDeleteResponse as DeleteResponse, ServicesIdGetResponse as GetResponse,
     ServicesIdPutResponse as PutResponse,
@@ -37,8 +38,8 @@ pub fn get(config: &Config, path_params: GetPathParams) -> GetResponse {
 
 pub fn put(config: &mut Config, path_params: PutPathParams, request: PutRequest) -> PutResponse {
     let service = match request.r#type.as_str() {
-        "smtp" => serde_json::from_value(request.config.0).map(NotificationService::SMTP),
-        "log" => serde_json::from_value(request.config.0).map(NotificationService::LOG),
+        "smtp" => serde_json::from_value(request.config.0).map(NotisNotificationService::SMTP),
+        "log" => serde_json::from_value(request.config.0).map(NotisNotificationService::LOG),
         t => {
             return PutResponse::Status400_BadRequest(reason(format!(
                 "Unknown notification service type '{t}'"
