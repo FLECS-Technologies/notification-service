@@ -1,6 +1,4 @@
-use crate::services::NotificationService as _;
-use crate::services::log::Logger;
-use crate::services::smtp::MailServer;
+use crate::services::NotisNotificationService;
 use schemars::schema_for;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -27,50 +25,6 @@ pub trait NotificationServiceConfig: schemars::JsonSchema {
     fn apply_patch(&mut self, patch: Self::Patch);
 }
 
-#[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
-#[serde(tag = "type")]
-pub enum NotificationService {
-    SMTP(crate::services::smtp::Config),
-    LOG(crate::services::log::Config),
-}
-
-impl NotificationService {
-    pub fn type_string(&self) -> String {
-        match self {
-            Self::LOG(_) => "log",
-            Self::SMTP(_) => "smtp",
-        }
-        .to_string()
-    }
-
-    pub fn send_notification_with_raw_options(
-        &self,
-        options: Option<serde_json::Value>,
-        title: &str,
-        content: Option<&str>,
-    ) -> Result<(), crate::Error> {
-        match self {
-            Self::SMTP(config) => {
-                MailServer.send_notification_with_raw_options(options, config, title, content)
-            }
-            Self::LOG(config) => {
-                Logger.send_notification_with_raw_options(options, config, title, content)
-            }
-        }
-    }
-
-    pub fn send_notification(
-        &self,
-        title: &str,
-        content: Option<&str>,
-    ) -> Result<(), crate::Error> {
-        match self {
-            Self::SMTP(config) => MailServer.send_notification(None, config, title, content),
-            Self::LOG(config) => Logger.send_notification(None, config, title, content),
-        }
-    }
-}
-
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error(transparent)]
@@ -92,7 +46,7 @@ pub struct Config {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default_notification_service: Option<String>,
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
-    pub notification_services: HashMap<String, NotificationService>,
+    pub notification_services: HashMap<String, NotisNotificationService>,
 }
 
 impl Default for Config {
@@ -115,11 +69,11 @@ impl Config {
             notification_services: HashMap::from([
                 (
                     "smtp".to_string(),
-                    NotificationService::SMTP(crate::services::smtp::Config::example()),
+                    NotisNotificationService::SMTP(crate::services::smtp::Config::example()),
                 ),
                 (
                     "log".to_string(),
-                    NotificationService::LOG(crate::services::log::Config::example()),
+                    NotisNotificationService::LOG(crate::services::log::Config::example()),
                 ),
             ]),
         }

@@ -1,6 +1,9 @@
 use crate::config::NotificationServiceConfig;
+use crate::services::log::Logger;
+use crate::services::smtp::MailServer;
 use schemars::schema_for;
 use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
 
 pub mod log;
 pub mod smtp;
@@ -30,4 +33,48 @@ pub trait NotificationService {
         let options = options.map(serde_json::from_value).transpose()?;
         self.send_notification(options, config, title, content)
     }
+}
+
+impl NotisNotificationService {
+    pub fn type_string(&self) -> String {
+        match self {
+            Self::LOG(_) => "log",
+            Self::SMTP(_) => "smtp",
+        }
+        .to_string()
+    }
+
+    pub fn send_notification_with_raw_options(
+        &self,
+        options: Option<serde_json::Value>,
+        title: &str,
+        content: Option<&str>,
+    ) -> Result<(), crate::Error> {
+        match self {
+            Self::SMTP(config) => {
+                MailServer.send_notification_with_raw_options(options, config, title, content)
+            }
+            Self::LOG(config) => {
+                Logger.send_notification_with_raw_options(options, config, title, content)
+            }
+        }
+    }
+
+    pub fn send_notification(
+        &self,
+        title: &str,
+        content: Option<&str>,
+    ) -> Result<(), crate::Error> {
+        match self {
+            Self::SMTP(config) => MailServer.send_notification(None, config, title, content),
+            Self::LOG(config) => Logger.send_notification(None, config, title, content),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
+#[serde(tag = "type")]
+pub enum NotisNotificationService {
+    SMTP(smtp::Config),
+    LOG(log::Config),
 }
