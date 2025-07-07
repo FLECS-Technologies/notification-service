@@ -11,7 +11,7 @@ pub mod smtp;
 pub trait NotificationService {
     type Config: NotificationServiceConfig;
     type NotificationOptions: schemars::JsonSchema + DeserializeOwned;
-    fn notification_schema(&self) -> schemars::Schema {
+    fn notification_schema() -> schemars::Schema {
         schema_for!(Self::NotificationOptions)
     }
 
@@ -38,8 +38,8 @@ pub trait NotificationService {
 impl NotisNotificationService {
     pub fn type_string(&self) -> String {
         match self {
-            Self::LOG(_) => "log",
-            Self::SMTP(_) => "smtp",
+            Self::LOG(_) => types::LOG,
+            Self::SMTP(_) => types::SMTP,
         }
         .to_string()
     }
@@ -70,6 +70,25 @@ impl NotisNotificationService {
             Self::LOG(config) => Logger.send_notification(None, config, title, content),
         }
     }
+
+    pub fn config_schema(&self) -> schemars::Schema {
+        match self {
+            Self::SMTP(_) => <MailServer as NotificationService>::Config::schema(),
+            Self::LOG(_) => <Logger as NotificationService>::Config::schema(),
+        }
+    }
+
+    pub fn config_patch_schema(&self) -> schemars::Schema {
+        match self {
+            Self::SMTP(_) => <MailServer as NotificationService>::Config::patch_schema(),
+            Self::LOG(_) => <Logger as NotificationService>::Config::patch_schema(),
+        }
+    }
+}
+
+pub mod types {
+    pub const SMTP: &str = "smtp";
+    pub const LOG: &str = "log";
 }
 
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]

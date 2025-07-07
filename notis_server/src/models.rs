@@ -15,6 +15,12 @@ pub struct ServicesIdNotificationsPostPathParams {
 
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 #[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct SchemaServiceTypesTypeConfigGetPathParams {
+    pub r#type: String,
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
 pub struct ServicesIdConfigGetPathParams {
     pub id: String,
 }

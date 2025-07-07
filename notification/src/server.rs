@@ -7,17 +7,18 @@ use notis_server::apis::notifications::{
 };
 use notis_server::apis::services::{
     DefaultServiceDeleteResponse, DefaultServiceGetResponse, DefaultServicePostResponse,
-    ServicesGetResponse, ServicesIdConfigGetResponse, ServicesIdConfigPatchResponse,
-    ServicesIdConfigSchemaGetResponse, ServicesIdDeleteResponse, ServicesIdGetResponse,
-    ServicesIdNotificationsSchemaGetResponse, ServicesIdPutResponse,
+    SchemaServiceTypesTypeConfigGetResponse, ServicesGetResponse, ServicesIdConfigGetResponse,
+    ServicesIdConfigPatchResponse, ServicesIdConfigSchemaGetResponse, ServicesIdDeleteResponse,
+    ServicesIdGetResponse, ServicesIdNotificationsSchemaGetResponse, ServicesIdPutResponse,
 };
 use notis_server::models;
 use notis_server::models::{
-    DefaultServicePostRequest, NotificationsPostRequest, ServicesIdConfigGetPathParams,
-    ServicesIdConfigPatchPathParams, ServicesIdConfigSchemaGetPathParams,
-    ServicesIdConfigSchemaGetQueryParams, ServicesIdDeletePathParams, ServicesIdGetPathParams,
-    ServicesIdNotificationsPostPathParams, ServicesIdNotificationsPostRequest,
-    ServicesIdNotificationsSchemaGetPathParams, ServicesIdPutPathParams, ServicesIdPutRequest,
+    DefaultServicePostRequest, NotificationsPostRequest, SchemaServiceTypesTypeConfigGetPathParams,
+    ServicesIdConfigGetPathParams, ServicesIdConfigPatchPathParams,
+    ServicesIdConfigSchemaGetPathParams, ServicesIdConfigSchemaGetQueryParams,
+    ServicesIdDeletePathParams, ServicesIdGetPathParams, ServicesIdNotificationsPostPathParams,
+    ServicesIdNotificationsPostRequest, ServicesIdNotificationsSchemaGetPathParams,
+    ServicesIdPutPathParams, ServicesIdPutRequest,
 };
 use notis_server::types::Object;
 use std::fmt::Display;
@@ -114,6 +115,16 @@ impl notis_server::apis::services::Services for Server {
             Err(e) => DefaultServicePostResponse::Status500_InternalServerError(reason(e)),
             Ok(_) => result,
         })
+    }
+
+    async fn schema_service_types_type_config_get(
+        &self,
+        _method: Method,
+        _host: axum::extract::Host,
+        _cookies: axum_extra::extract::cookie::CookieJar,
+        path_params: SchemaServiceTypesTypeConfigGetPathParams,
+    ) -> Result<SchemaServiceTypesTypeConfigGetResponse, ()> {
+        Ok(api::schema::service_types::r#type::config::get(path_params))
     }
 
     async fn services_get(

@@ -1,5 +1,4 @@
-use crate::config::{Config, NotificationServiceConfig};
-use crate::services::NotisNotificationService;
+use crate::config::Config;
 use notis_server::apis::services::ServicesIdNotificationsSchemaGetResponse as GetResponse;
 use notis_server::models::ServicesIdNotificationsSchemaGetPathParams as GetPathParams;
 use notis_server::types;
@@ -7,9 +6,7 @@ use notis_server::types;
 pub fn get(config: &Config, path_params: GetPathParams) -> GetResponse {
     let schema = match config.notification_services.get(&path_params.id) {
         None => return GetResponse::Status404_ServiceNotFound,
-        Some(NotisNotificationService::LOG(config)) => config.schema(),
-
-        Some(NotisNotificationService::SMTP(config)) => config.schema(),
+        Some(service) => service.config_schema(),
     };
     GetResponse::Status200_Success(types::Object(serde_json::to_value(schema).unwrap()))
 }
