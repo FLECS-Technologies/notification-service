@@ -29,6 +29,25 @@ components:
           schema:
             $ref: '#/components/schemas/reason'
 paths:
+  '/schema/service_types/{type}/config':
+    get:
+      tags: [ 'Services' ]
+      summary: 'Get the configuration schema of a service type'
+      parameters:
+        - name: type
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: 'Service type not found'
   '/default_service':
     get:
       tags: [ 'Services' ]
@@ -149,7 +168,6 @@ paths:
                 required: [ 'type', 'id' ]
         '404':
           description: 'Service not found'
-
     delete:
       tags: [ 'Services' ]
       summary: 'Delete the notification service'

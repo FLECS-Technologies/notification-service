@@ -27,6 +27,10 @@ where
                 .post(default_service_post::<I, A>),
         )
         .route("/notifications", post(notifications_post::<I, A>))
+        .route(
+            "/schema/service_types/:r#type/config",
+            get(schema_service_types_type_config_get::<I, A>),
+        )
         .route("/services", get(services_get::<I, A>))
         .route(
             "/services/:id",
@@ -521,6 +525,87 @@ where
             response.status(500).body(Body::empty())
         }
     };
+
+    resp.map_err(|e| {
+        error!(error = ?e);
+        StatusCode::INTERNAL_SERVER_ERROR
+    })
+}
+
+#[tracing::instrument(skip_all)]
+fn schema_service_types_type_config_get_validation(
+    path_params: models::SchemaServiceTypesTypeConfigGetPathParams,
+) -> std::result::Result<(models::SchemaServiceTypesTypeConfigGetPathParams,), ValidationErrors> {
+    path_params.validate()?;
+
+    Ok((path_params,))
+}
+/// SchemaServiceTypesTypeConfigGet - GET /schema/service_types/{type}/config
+#[tracing::instrument(skip_all)]
+async fn schema_service_types_type_config_get<I, A>(
+    method: Method,
+    host: Host,
+    cookies: CookieJar,
+    Path(path_params): Path<models::SchemaServiceTypesTypeConfigGetPathParams>,
+    State(api_impl): State<I>,
+) -> Result<Response, StatusCode>
+where
+    I: AsRef<A> + Send + Sync,
+    A: apis::services::Services,
+{
+    #[allow(clippy::redundant_closure)]
+    let validation = tokio::task::spawn_blocking(move || {
+        schema_service_types_type_config_get_validation(path_params)
+    })
+    .await
+    .unwrap();
+
+    let Ok((path_params,)) = validation else {
+        return Response::builder()
+            .status(StatusCode::BAD_REQUEST)
+            .body(Body::from(validation.unwrap_err().to_string()))
+            .map_err(|_| StatusCode::BAD_REQUEST);
+    };
+
+    let result = api_impl
+        .as_ref()
+        .schema_service_types_type_config_get(method, host, cookies, path_params)
+        .await;
+
+    let mut response = Response::builder();
+
+    let resp = match result {
+                                            Ok(rsp) => match rsp {
+                                                apis::services::SchemaServiceTypesTypeConfigGetResponse::Status200_Success
+                                                    (body)
+                                                => {
+                                                  let mut response = response.status(200);
+                                                  {
+                                                    let mut response_headers = response.headers_mut().unwrap();
+                                                    response_headers.insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json").map_err(|e| { error!(error = ?e); StatusCode::INTERNAL_SERVER_ERROR })?);
+                                                  }
+
+                                                  let body_content =  tokio::task::spawn_blocking(move ||
+                                                      serde_json::to_vec(&body).map_err(|e| {
+                                                        error!(error = ?e);
+                                                        StatusCode::INTERNAL_SERVER_ERROR
+                                                      })).await.unwrap()?;
+                                                  response.body(Body::from(body_content))
+                                                },
+                                                apis::services::SchemaServiceTypesTypeConfigGetResponse::Status404_ServiceTypeNotFound
+                                                => {
+                                                  let mut response = response.status(404);
+                                                  response.body(Body::empty())
+                                                },
+                                            },
+                                            Err(_) => {
+                                                // Application code returned an error. This should not happen, as the implementation should
+                                                // return a valid response.
+                                                response.status(500).body(Body::empty())
+                                            },
+                                        };
 
     resp.map_err(|e| {
         error!(error = ?e);

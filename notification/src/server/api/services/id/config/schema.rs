@@ -1,5 +1,3 @@
-use crate::config::NotificationServiceConfig;
-use crate::services::NotisNotificationService;
 use notis_server::apis::services::ServicesIdConfigSchemaGetResponse as GetResponse;
 use notis_server::models::ServicesIdConfigSchemaGetPathParams as GetPathParams;
 use notis_server::models::ServicesIdConfigSchemaGetQueryParams as GetQueryParams;
@@ -11,19 +9,11 @@ pub fn get(
     query_params: GetQueryParams,
 ) -> GetResponse {
     match &config.notification_services.get(&path_params.id) {
-        Some(NotisNotificationService::LOG(config)) => {
+        Some(service) => {
             let schema = if query_params.patch.unwrap_or_default() {
-                config.patch_schema()
+                service.config_patch_schema()
             } else {
-                config.schema()
-            };
-            GetResponse::Status200_Success(types::Object(serde_json::to_value(schema).unwrap()))
-        }
-        &Some(NotisNotificationService::SMTP(config)) => {
-            let schema = if query_params.patch.unwrap_or_default() {
-                config.patch_schema()
-            } else {
-                config.schema()
+                service.config_schema()
             };
             GetResponse::Status200_Success(types::Object(serde_json::to_value(schema).unwrap()))
         }

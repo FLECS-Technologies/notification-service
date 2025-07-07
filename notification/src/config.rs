@@ -16,10 +16,10 @@ pub fn config_path() -> PathBuf {
 
 pub trait NotificationServiceConfig: schemars::JsonSchema {
     type Patch: schemars::JsonSchema;
-    fn schema(&self) -> schemars::Schema {
+    fn schema() -> schemars::Schema {
         schema_for!(Self)
     }
-    fn patch_schema(&self) -> schemars::Schema {
+    fn patch_schema() -> schemars::Schema {
         schema_for!(Self::Patch)
     }
     fn apply_patch(&mut self, patch: Self::Patch);
@@ -62,19 +62,15 @@ impl Default for Config {
 
 impl Config {
     pub fn example() -> Self {
+        let smtp = NotisNotificationService::SMTP(crate::services::smtp::Config::example());
+        let log = NotisNotificationService::LOG(crate::services::log::Config::example());
         Self {
             trace_filter: Some("debug".to_string()),
             port: 80,
-            default_notification_service: Some("smtp".to_string()),
+            default_notification_service: Some(smtp.type_string()),
             notification_services: HashMap::from([
-                (
-                    "smtp".to_string(),
-                    NotisNotificationService::SMTP(crate::services::smtp::Config::example()),
-                ),
-                (
-                    "log".to_string(),
-                    NotisNotificationService::LOG(crate::services::log::Config::example()),
-                ),
+                (smtp.type_string(), smtp),
+                (log.type_string(), log),
             ]),
         }
     }

@@ -46,6 +46,16 @@ pub enum DefaultServicePostResponse {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[must_use]
 #[allow(clippy::large_enum_variant)]
+pub enum SchemaServiceTypesTypeConfigGetResponse {
+    /// Success
+    Status200_Success(crate::types::Object),
+    /// Service type not found
+    Status404_ServiceTypeNotFound,
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+#[allow(clippy::large_enum_variant)]
 pub enum ServicesGetResponse {
     /// Success
     Status200_Success(std::collections::HashMap<String, String>),
@@ -165,6 +175,17 @@ pub trait Services {
         cookies: CookieJar,
         body: models::DefaultServicePostRequest,
     ) -> Result<DefaultServicePostResponse, ()>;
+
+    /// Get the configuration schema of a service type.
+    ///
+    /// SchemaServiceTypesTypeConfigGet - GET /schema/service_types/{type}/config
+    async fn schema_service_types_type_config_get(
+        &self,
+        method: Method,
+        host: Host,
+        cookies: CookieJar,
+        path_params: models::SchemaServiceTypesTypeConfigGetPathParams,
+    ) -> Result<SchemaServiceTypesTypeConfigGetResponse, ()>;
 
     /// Get a list of all registered services, their type and the default service.
     ///
