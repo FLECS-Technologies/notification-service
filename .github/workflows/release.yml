@@ -1,4 +1,5 @@
-name: release.yml
+name: Release
+run-name: Release ${{ github.event.release.tag_name }}
 on:
   release:
     types: [ published ]
@@ -8,9 +9,16 @@ jobs:
     with:
       tag: ${{ github.event.release.tag_name }}
       build_type: 'release'
+      registry: ${{ vars.DOCKER_REGISTRY }}
+      app_name: ${{ vars.APP_NAME }}
+      registry_namespace: ${{ vars.DOCKER_REGISTRY_NAMESPACE }}
   deploy:
     needs: [ build_image ]
     uses: ./.github/workflows/deploy_image.yml
-    secrets: inherit
     with:
       tag: ${{ github.event.release.tag_name }}
+      username: ${{ secrets.FLECS_PUBLIC_REGISTRY_USER }}
+      password: ${{ secrets.FLECS_PUBLIC_REGISTRY_TOKEN }}
+      registry: ${{ vars.DOCKER_REGISTRY }}
+      app_name: ${{ vars.APP_NAME }}
+      registry_namespace: ${{ vars.DOCKER_REGISTRY_NAMESPACE }}

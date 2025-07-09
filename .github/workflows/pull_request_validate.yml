@@ -57,8 +57,8 @@ jobs:
           cargo build --all-features --locked --target ${{ matrix.target }}
       - uses: actions/upload-artifact@v4
         with:
-          name: "notis_${{ matrix.target }}"
-          path: "target/${{ matrix.target }}/debug/notis"
+          name: "${{ vars.APP_NAME }}_${{ matrix.target }}"
+          path: "target/${{ matrix.target }}/debug/${{ vars.APP_NAME }}"
   determine_tag:
     runs-on: ubuntu-latest
     outputs:
@@ -79,3 +79,6 @@ jobs:
     with:
       tag: ${{ needs.determine_tag.outputs.tag }}
       build_type: 'debug'
+      registry: ${{ vars.DOCKER_REGISTRY }}
+      app_name: ${{ vars.APP_NAME }}
+      registry_namespace: ${{ vars.DOCKER_REGISTRY_NAMESPACE }}
