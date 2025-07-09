@@ -43,8 +43,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ inputs.registry }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.username }}
+          password: ${{ secrets.password }}
       - name: Load and push images
         env:
           NAMESPACE: ${{ inputs.registry_namespace }}
