@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 const CONFIG_PATH_ENV: &str = "NOTIS_CONFIG_PATH";
-const DEFAULT_PORT: u16 = 15825;
+const DEFAULT_PORT: u16 = 80;
 pub fn config_path() -> PathBuf {
     PathBuf::from(
         std::env::var(CONFIG_PATH_ENV)
@@ -66,7 +66,7 @@ impl Config {
         let log = NotisNotificationService::LOG(crate::services::log::Config::example());
         Self {
             trace_filter: Some("debug".to_string()),
-            port: 80,
+            port: DEFAULT_PORT,
             default_notification_service: Some(smtp.type_string()),
             notification_services: HashMap::from([
                 (smtp.type_string(), smtp),

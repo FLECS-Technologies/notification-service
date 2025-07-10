@@ -45,4 +45,5 @@ RUN apt-get update && \
 COPY --from=build /notis /
 ADD ./docker/fs /
 
+EXPOSE 80
 ENTRYPOINT [ "/notis" ]
