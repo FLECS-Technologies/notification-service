@@ -1,1 +1,1 @@
-pub mod r#type;
+pub mod service_type;

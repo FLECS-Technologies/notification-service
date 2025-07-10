@@ -28,8 +28,8 @@ where
         )
         .route("/notifications", post(notifications_post::<I, A>))
         .route(
-            "/schema/service_types/:r#type/config",
-            get(schema_service_types_type_config_get::<I, A>),
+            "/schema/service_types/:service_type/config",
+            get(schema_service_types_service_type_config_get::<I, A>),
         )
         .route("/services", get(services_get::<I, A>))
         .route(
@@ -533,20 +533,23 @@ where
 }
 
 #[tracing::instrument(skip_all)]
-fn schema_service_types_type_config_get_validation(
-    path_params: models::SchemaServiceTypesTypeConfigGetPathParams,
-) -> std::result::Result<(models::SchemaServiceTypesTypeConfigGetPathParams,), ValidationErrors> {
+fn schema_service_types_service_type_config_get_validation(
+    path_params: models::SchemaServiceTypesServiceTypeConfigGetPathParams,
+) -> std::result::Result<
+    (models::SchemaServiceTypesServiceTypeConfigGetPathParams,),
+    ValidationErrors,
+> {
     path_params.validate()?;
 
     Ok((path_params,))
 }
-/// SchemaServiceTypesTypeConfigGet - GET /schema/service_types/{type}/config
+/// SchemaServiceTypesServiceTypeConfigGet - GET /schema/service_types/{service_type}/config
 #[tracing::instrument(skip_all)]
-async fn schema_service_types_type_config_get<I, A>(
+async fn schema_service_types_service_type_config_get<I, A>(
     method: Method,
     host: Host,
     cookies: CookieJar,
-    Path(path_params): Path<models::SchemaServiceTypesTypeConfigGetPathParams>,
+    Path(path_params): Path<models::SchemaServiceTypesServiceTypeConfigGetPathParams>,
     State(api_impl): State<I>,
 ) -> Result<Response, StatusCode>
 where
@@ -555,7 +558,7 @@ where
 {
     #[allow(clippy::redundant_closure)]
     let validation = tokio::task::spawn_blocking(move || {
-        schema_service_types_type_config_get_validation(path_params)
+        schema_service_types_service_type_config_get_validation(path_params)
     })
     .await
     .unwrap();
@@ -569,14 +572,14 @@ where
 
     let result = api_impl
         .as_ref()
-        .schema_service_types_type_config_get(method, host, cookies, path_params)
+        .schema_service_types_service_type_config_get(method, host, cookies, path_params)
         .await;
 
     let mut response = Response::builder();
 
     let resp = match result {
                                             Ok(rsp) => match rsp {
-                                                apis::services::SchemaServiceTypesTypeConfigGetResponse::Status200_Success
+                                                apis::services::SchemaServiceTypesServiceTypeConfigGetResponse::Status200_Success
                                                     (body)
                                                 => {
                                                   let mut response = response.status(200);
@@ -594,7 +597,7 @@ where
                                                       })).await.unwrap()?;
                                                   response.body(Body::from(body_content))
                                                 },
-                                                apis::services::SchemaServiceTypesTypeConfigGetResponse::Status404_ServiceTypeNotFound
+                                                apis::services::SchemaServiceTypesServiceTypeConfigGetResponse::Status404_ServiceTypeNotFound
                                                 => {
                                                   let mut response = response.status(404);
                                                   response.body(Body::empty())
