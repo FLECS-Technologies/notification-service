@@ -6,8 +6,7 @@ info:
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
-servers:
-  - url: 'https'
+
 components:
   schemas:
     reason:
@@ -29,12 +28,12 @@ components:
           schema:
             $ref: '#/components/schemas/reason'
 paths:
-  '/schema/service_types/{type}/config':
+  '/schema/service_types/{service_type}/config':
     get:
       tags: [ 'Services' ]
       summary: 'Get the configuration schema of a service type'
       parameters:
-        - name: type
+        - name: service_type
           in: path
           schema:
             type: string
