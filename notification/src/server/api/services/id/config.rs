@@ -16,7 +16,7 @@ pub fn get(config: &crate::config::Config, path_params: GetPathParams) -> GetRes
             GetResponse::Status200_Success(types::Object(serde_json::to_value(config).unwrap()))
         }
         &Some(NotisNotificationService::SMTP(config)) => GetResponse::Status200_Success(
-            types::Object(serde_json::to_value(&config.redacted()).unwrap()),
+            types::Object(serde_json::to_value(config.redacted()).unwrap()),
         ),
         None => GetResponse::Status404_ServiceNotFound,
     }

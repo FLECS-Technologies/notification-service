@@ -18,8 +18,8 @@ use notis_server::models::{
     SchemaServiceTypesServiceTypeConfigGetPathParams, ServicesIdConfigGetPathParams,
     ServicesIdConfigPatchPathParams, ServicesIdConfigSchemaGetPathParams,
     ServicesIdConfigSchemaGetQueryParams, ServicesIdDeletePathParams, ServicesIdGetPathParams,
-    ServicesIdNotificationsPostPathParams, ServicesIdNotificationsPostRequest,
-    ServicesIdNotificationsSchemaGetPathParams, ServicesIdPutPathParams, ServicesIdPutRequest,
+    ServicesIdNotificationsPostPathParams, ServicesIdNotificationsSchemaGetPathParams,
+    ServicesIdPutPathParams, ServicesIdPutRequest,
 };
 use notis_server::types::Object;
 use std::fmt::Display;
@@ -260,13 +260,17 @@ impl notis_server::apis::notifications::Notifications for Server {
         _host: axum::extract::Host,
         _cookies: axum_extra::extract::cookie::CookieJar,
         path_params: ServicesIdNotificationsPostPathParams,
-        body: ServicesIdNotificationsPostRequest,
+        body: axum_extra::extract::Multipart,
     ) -> Result<ServicesIdNotificationsPostResponse, ()> {
+        let request =
+            match api::services::id::notifications::read_post_request_from_multipart(body).await {
+                Ok(request) => request,
+                Err(e) => return Ok(e),
+            };
         let config = self.config.read().unwrap();
-        Ok(api::services::id::notifications::post(
-            &config,
-            path_params,
-            body,
-        ))
+        Ok(
+            api::services::id::notifications::post(&config, path_params, request)
+                .unwrap_or_else(|e| e),
+        )
     }
 }

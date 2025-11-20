@@ -152,29 +152,13 @@ where
     })
 }
 
-#[derive(validator::Validate)]
-#[allow(dead_code)]
-struct ServicesIdNotificationsPostBodyValidator<'a> {
-    #[validate(nested)]
-    body: &'a models::ServicesIdNotificationsPostRequest,
-}
-
 #[tracing::instrument(skip_all)]
 fn services_id_notifications_post_validation(
     path_params: models::ServicesIdNotificationsPostPathParams,
-    body: models::ServicesIdNotificationsPostRequest,
-) -> std::result::Result<
-    (
-        models::ServicesIdNotificationsPostPathParams,
-        models::ServicesIdNotificationsPostRequest,
-    ),
-    ValidationErrors,
-> {
+) -> std::result::Result<(models::ServicesIdNotificationsPostPathParams,), ValidationErrors> {
     path_params.validate()?;
-    let b = ServicesIdNotificationsPostBodyValidator { body: &body };
-    b.validate()?;
 
-    Ok((path_params, body))
+    Ok((path_params,))
 }
 /// ServicesIdNotificationsPost - POST /services/{id}/notifications
 #[tracing::instrument(skip_all)]
@@ -184,20 +168,19 @@ async fn services_id_notifications_post<I, A>(
     cookies: CookieJar,
     Path(path_params): Path<models::ServicesIdNotificationsPostPathParams>,
     State(api_impl): State<I>,
-    Json(body): Json<models::ServicesIdNotificationsPostRequest>,
+    body: Multipart,
 ) -> Result<Response, StatusCode>
 where
     I: AsRef<A> + Send + Sync,
     A: apis::notifications::Notifications,
 {
     #[allow(clippy::redundant_closure)]
-    let validation = tokio::task::spawn_blocking(move || {
-        services_id_notifications_post_validation(path_params, body)
-    })
-    .await
-    .unwrap();
+    let validation =
+        tokio::task::spawn_blocking(move || services_id_notifications_post_validation(path_params))
+            .await
+            .unwrap();
 
-    let Ok((path_params, body)) = validation else {
+    let Ok((path_params,)) = validation else {
         return Response::builder()
             .status(StatusCode::BAD_REQUEST)
             .body(Body::from(validation.unwrap_err().to_string()))
