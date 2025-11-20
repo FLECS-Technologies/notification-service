@@ -78,6 +78,13 @@ impl NotisNotificationService {
         }
     }
 
+    pub fn notification_schema(&self) -> schemars::Schema {
+        match self {
+            Self::SMTP(_) => <MailServer as NotificationService>::notification_schema(),
+            Self::LOG(_) => <Logger as NotificationService>::notification_schema(),
+        }
+    }
+
     pub fn config_patch_schema(&self) -> schemars::Schema {
         match self {
             Self::SMTP(_) => <MailServer as NotificationService>::Config::patch_schema(),
