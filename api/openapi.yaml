@@ -196,19 +196,23 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
-                options:
-                  type: object
-                  description: 'Optional options for the notification'
                 title:
                   type: string
                   description: 'Short title of the notification'
+                options:
+                  type: string
+                  description: 'Optional options for the notification decoded into a json string'
                 content:
                   type: string
                   description: 'Optional content of the notification'
+                attachment:
+                  type: string
+                  format: binary
+                  description: 'An attachment to be added to the notification, can be present multiple times in the form data'
               required: [ 'title' ]
       responses:
         '200':

@@ -57,6 +57,6 @@ pub trait Notifications {
         host: Host,
         cookies: CookieJar,
         path_params: models::ServicesIdNotificationsPostPathParams,
-        body: models::ServicesIdNotificationsPostRequest,
+        body: Multipart,
     ) -> Result<ServicesIdNotificationsPostResponse, ()>;
 }

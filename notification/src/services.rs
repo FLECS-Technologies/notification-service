@@ -8,6 +8,12 @@ use serde::{Deserialize, Serialize};
 pub mod log;
 pub mod smtp;
 
+pub struct Attachment {
+    pub file_name: String,
+    pub content_type: lettre::message::header::ContentType,
+    pub file_content: Vec<u8>,
+}
+
 pub trait NotificationService {
     type Config: NotificationServiceConfig;
     type NotificationOptions: schemars::JsonSchema + DeserializeOwned;
@@ -20,6 +26,7 @@ pub trait NotificationService {
         options: Option<Self::NotificationOptions>,
         config: &Self::Config,
         title: &str,
+        attachments: Vec<Attachment>,
         content: Option<&str>,
     ) -> Result<(), crate::Error>;
 
@@ -27,11 +34,12 @@ pub trait NotificationService {
         &self,
         options: Option<serde_json::Value>,
         config: &Self::Config,
+        attachments: Vec<Attachment>,
         title: &str,
         content: Option<&str>,
     ) -> Result<(), crate::Error> {
         let options = options.map(serde_json::from_value).transpose()?;
-        self.send_notification(options, config, title, content)
+        self.send_notification(options, config, title, attachments, content)
     }
 }
 
@@ -47,16 +55,25 @@ impl NotisNotificationService {
     pub fn send_notification_with_raw_options(
         &self,
         options: Option<serde_json::Value>,
+        attachments: Vec<Attachment>,
         title: &str,
         content: Option<&str>,
     ) -> Result<(), crate::Error> {
         match self {
-            Self::SMTP(config) => {
-                MailServer.send_notification_with_raw_options(options, config, title, content)
-            }
-            Self::LOG(config) => {
-                Logger.send_notification_with_raw_options(options, config, title, content)
-            }
+            Self::SMTP(config) => MailServer.send_notification_with_raw_options(
+                options,
+                config,
+                attachments,
+                title,
+                content,
+            ),
+            Self::LOG(config) => Logger.send_notification_with_raw_options(
+                options,
+                config,
+                attachments,
+                title,
+                content,
+            ),
         }
     }
 
@@ -64,10 +81,15 @@ impl NotisNotificationService {
         &self,
         title: &str,
         content: Option<&str>,
+        attachments: Vec<Attachment>,
     ) -> Result<(), crate::Error> {
         match self {
-            Self::SMTP(config) => MailServer.send_notification(None, config, title, content),
-            Self::LOG(config) => Logger.send_notification(None, config, title, content),
+            Self::SMTP(config) => {
+                MailServer.send_notification(None, config, title, attachments, content)
+            }
+            Self::LOG(config) => {
+                Logger.send_notification(None, config, title, attachments, content)
+            }
         }
     }
 

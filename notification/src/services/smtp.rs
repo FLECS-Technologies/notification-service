@@ -1,5 +1,5 @@
 mod config;
-use crate::services::NotificationService;
+use crate::services::{Attachment, NotificationService};
 pub use config::*;
 use std::time::Duration;
 use tracing::{error, info, info_span};
@@ -17,6 +17,12 @@ pub enum Error {
     Smtp(#[from] lettre::transport::smtp::Error),
     #[error("Failed to create encrypted tls connection")]
     Tls,
+
+impl From<Attachment> for lettre::message::SinglePart {
+    fn from(value: Attachment) -> Self {
+        lettre::message::Attachment::new(value.file_name)
+            .body(value.file_content, value.content_type)
+    }
 }
 
 fn supports_feature(feature: &str, response: &lettre::transport::smtp::response::Response) -> bool {
@@ -35,12 +41,14 @@ impl NotificationService for MailServer {
         options: Option<Self::NotificationOptions>,
         config: &Self::Config,
         title: &str,
+        attachments: Vec<Attachment>,
         content: Option<&str>,
     ) -> Result<(), crate::Error> {
         self.send_mail(
             config,
             title,
             content.map(str::to_string),
+            attachments,
             options.unwrap_or_else(|| config.receivers.clone()),
         )?;
         Ok(())
@@ -104,6 +112,7 @@ impl MailServer {
         config: &Config,
         subject: &str,
         content: Option<String>,
+        attachments: Vec<Attachment>,
         receivers: Vec<Mailbox>,
     ) -> Result<(), Error> {
         let _span = info_span!(
@@ -114,12 +123,17 @@ impl MailServer {
         .entered();
         let mut mail_builder = lettre::Message::builder()
             .from(config.sender.clone().into())
-            .subject(subject)
-            .header(lettre::message::header::ContentType::TEXT_PLAIN);
+            .subject(subject);
         for mailbox in receivers {
             mail_builder = mail_builder.to(mailbox.into())
         }
-        let email = mail_builder.body(content.unwrap_or_default())?;
+        let mut multipart = lettre::message::MultiPart::mixed().singlepart(
+            lettre::message::SinglePart::plain(content.unwrap_or_default()),
+        );
+        for attachment in attachments {
+            multipart = multipart.singlepart(attachment.into())
+        }
+        let email = mail_builder.multipart(multipart)?;
 
         let tls =
             lettre::transport::smtp::client::TlsParameters::new(config.server_url.as_str().into())?;

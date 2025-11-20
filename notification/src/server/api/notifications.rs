@@ -9,7 +9,8 @@ pub fn post(config: &crate::config::Config, request: PostRequest) -> PostRespons
         .and_then(|default| config.notification_services.get(default))
     {
         Some(service) => {
-            match service.send_notification(&request.title, request.content.as_deref()) {
+            match service.send_notification(&request.title, request.content.as_deref(), Vec::new())
+            {
                 Ok(_) => PostResponse::Status200_Success,
                 Err(e) => PostResponse::Status500_InternalServerError(reason(e)),
             }
