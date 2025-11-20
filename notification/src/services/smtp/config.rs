@@ -24,6 +24,7 @@ pub struct Config {
     pub auth_mechanism: Option<lettre::transport::smtp::authentication::Mechanism>,
     pub sender: Mailbox,
     pub receivers: Vec<Mailbox>,
+    pub total_attachment_size_limit: Option<usize>,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize, JsonSchema)]
@@ -63,6 +64,7 @@ impl Config {
                     email: lettre::Address::new("charlie", "mail.ca").unwrap(),
                 },
             ],
+            total_attachment_size_limit: Some(1024 * 1024 * 100),
         }
     }
 
