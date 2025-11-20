@@ -17,6 +17,11 @@ pub enum Error {
     Smtp(#[from] lettre::transport::smtp::Error),
     #[error("Failed to create encrypted tls connection")]
     Tls,
+    #[error(
+        "The total size limit of attachments ({limit}bytes) was exceeded (total size = {total}bytes"
+    )]
+    TotalAttachmentSizeLimitExceeded { limit: usize, total: usize },
+}
 
 impl From<Attachment> for lettre::message::SinglePart {
     fn from(value: Attachment) -> Self {
@@ -121,6 +126,18 @@ impl MailServer {
             server = config.server_url,
         )
         .entered();
+        if let Some(total_attachment_size_limit) = config.total_attachment_size_limit {
+            let total_attachment_size: usize = attachments
+                .iter()
+                .map(|attachment| attachment.file_content.len())
+                .sum();
+            if total_attachment_size > total_attachment_size_limit {
+                return Err(Error::TotalAttachmentSizeLimitExceeded {
+                    total: total_attachment_size,
+                    limit: total_attachment_size_limit,
+                });
+            }
+        }
         let mut mail_builder = lettre::Message::builder()
             .from(config.sender.clone().into())
             .subject(subject);
