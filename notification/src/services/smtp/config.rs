@@ -65,6 +65,24 @@ impl Config {
             ],
         }
     }
+
+    pub fn redacted(&self) -> Self {
+        let credentials_json: serde_json::Value =
+            serde_json::from_str(&serde_json::to_string(&self.credentials).unwrap()).unwrap();
+        let username = credentials_json
+            .as_object()
+            .unwrap()
+            .get("authentication_identity")
+            .unwrap()
+            .to_string();
+        Self {
+            credentials: lettre::transport::smtp::authentication::Credentials::new(
+                username,
+                "***".to_string(),
+            ),
+            ..self.clone()
+        }
+    }
 }
 
 impl NotificationServiceConfig for Config {
