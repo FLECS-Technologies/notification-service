@@ -48,7 +48,7 @@ where
         )
         .route(
             "/services/:id/notifications",
-            post(services_id_notifications_post::<I, A>),
+            post(services_id_notifications_post::<I, A>).layer(DefaultBodyLimit::disable()),
         )
         .route(
             "/services/:id/notifications/schema",

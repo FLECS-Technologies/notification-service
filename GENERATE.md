@@ -12,6 +12,14 @@ Execute the following command from the repository root directory. Adjust the ver
 
 Format the generated code using [rustfmt](https://github.com/rust-lang/rustfmt): ``cargo fmt``
 
+## Apply patches
+
+Some features are infeasible to implement without making manual adjustments after code generation. We therefore save
+these changes in patch files to be able to apply them after code generation.
+These patches are located in `notis_server/patches` and should be applied in order of increasing number.
+e.g.
+``git apply notis_server/patches/0-unlimited-notification-body-limit.patch``
+
 ## Manual adjustments
 
 We currently need access to `notis_server::types::Object.0` which can not be accessed in the generated code. We

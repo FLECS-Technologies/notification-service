@@ -1,0 +1,13 @@
+diff --git a/notis_server/src/server/mod.rs b/notis_server/src/server/mod.rs
+index ecf6190..ba4b51a 100644
+--- a/notis_server/src/server/mod.rs
++++ b/notis_server/src/server/mod.rs
+@@ -48,7 +48,7 @@ where
+         )
+         .route(
+             "/services/:id/notifications",
+-            post(services_id_notifications_post::<I, A>),
++            post(services_id_notifications_post::<I, A>).layer(DefaultBodyLimit::disable()),
+         )
+         .route(
+             "/services/:id/notifications/schema",
