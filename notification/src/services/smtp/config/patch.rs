@@ -22,6 +22,13 @@ pub struct ConfigPatch {
     pub sender: Option<Mailbox>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub receivers: Option<Vec<Mailbox>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        with = "::serde_with::rust::double_option"
+    )]
+    #[schemars(with = "Option<Option<usize>>")]
+    pub total_attachment_size_limit: Option<Option<usize>>,
 }
 
 #[cfg(test)]
@@ -39,12 +46,13 @@ mod tests {
             auth_mechanism: None,
             sender: None,
             receivers: None,
+            total_attachment_size_limit: None,
         };
         assert_eq!(p, serde_json::from_str(s).unwrap());
         assert_eq!(s, serde_json::to_string(&p).unwrap());
 
         // Unset Value
-        let s = r#"{"auth_mechanism":null}"#;
+        let s = r#"{"auth_mechanism":null,"total_attachment_size_limit":null}"#;
         let p = ConfigPatch {
             server_url: None,
             credentials: None,
@@ -52,12 +60,13 @@ mod tests {
             auth_mechanism: Some(None),
             sender: None,
             receivers: None,
+            total_attachment_size_limit: Some(None),
         };
         assert_eq!(p, serde_json::from_str(s).unwrap());
         assert_eq!(s, serde_json::to_string(&p).unwrap());
 
         // Existing Value
-        let s = r#"{"auth_mechanism":"Login"}"#;
+        let s = r#"{"auth_mechanism":"Login","total_attachment_size_limit":100}"#;
         let p = ConfigPatch {
             server_url: None,
             credentials: None,
@@ -65,6 +74,7 @@ mod tests {
             auth_mechanism: Some(Some(Mechanism::Login)),
             sender: None,
             receivers: None,
+            total_attachment_size_limit: Some(Some(100)),
         };
         assert_eq!(p, serde_json::from_str(s).unwrap());
         assert_eq!(s, serde_json::to_string(&p).unwrap());
