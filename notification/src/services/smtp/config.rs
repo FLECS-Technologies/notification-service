@@ -109,5 +109,8 @@ impl NotificationServiceConfig for Config {
         if let Some(receivers) = patch.receivers {
             self.receivers = receivers;
         }
+        if let Some(total_attachment_size_limit) = patch.total_attachment_size_limit {
+            self.total_attachment_size_limit = total_attachment_size_limit;
+        }
     }
 }
