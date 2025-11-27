@@ -123,6 +123,6 @@ pub mod types {
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 #[serde(tag = "type")]
 pub enum NotisNotificationService {
-    SMTP(smtp::Config),
-    LOG(log::Config),
+    SMTP(Box<smtp::Config>),
+    LOG(Box<log::Config>),
 }

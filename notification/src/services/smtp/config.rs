@@ -5,6 +5,7 @@ use crate::config::NotificationServiceConfig;
 pub use patch::ConfigPatch;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
 pub enum ConnectionType {
@@ -24,6 +25,8 @@ pub struct Config {
     pub auth_mechanism: Option<lettre::transport::smtp::authentication::Mechanism>,
     pub sender: Mailbox,
     pub receivers: Vec<Mailbox>,
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub receiver_groups: HashMap<String, Vec<Mailbox>>,
     pub total_attachment_size_limit: Option<usize>,
 }
 
@@ -64,6 +67,38 @@ impl Config {
                     email: lettre::Address::new("charlie", "mail.ca").unwrap(),
                 },
             ],
+            receiver_groups: HashMap::from([
+                (
+                    "Alpha".to_string(),
+                    vec![
+                        Mailbox {
+                            name: Some("Dave".to_string()),
+                            email: lettre::Address::new("dave", "mail.nl").unwrap(),
+                        },
+                        Mailbox {
+                            name: Some("Eric".to_string()),
+                            email: lettre::Address::new("eric", "mail.es").unwrap(),
+                        },
+                    ],
+                ),
+                (
+                    "Beta".to_string(),
+                    vec![
+                        Mailbox {
+                            name: Some("Fiona".to_string()),
+                            email: lettre::Address::new("fiona", "mail.fr").unwrap(),
+                        },
+                        Mailbox {
+                            name: Some("Gina".to_string()),
+                            email: lettre::Address::new("gina", "mail.es").unwrap(),
+                        },
+                        Mailbox {
+                            name: Some("Hera".to_string()),
+                            email: lettre::Address::new("hera", "mail.de").unwrap(),
+                        },
+                    ],
+                ),
+            ]),
             total_attachment_size_limit: Some(1024 * 1024 * 100),
         }
     }
@@ -111,6 +146,9 @@ impl NotificationServiceConfig for Config {
         }
         if let Some(total_attachment_size_limit) = patch.total_attachment_size_limit {
             self.total_attachment_size_limit = total_attachment_size_limit;
+        }
+        if let Some(receiver_groups) = patch.receiver_groups {
+            self.receiver_groups = receiver_groups;
         }
     }
 }

@@ -62,8 +62,9 @@ impl Default for Config {
 
 impl Config {
     pub fn example() -> Self {
-        let smtp = NotisNotificationService::SMTP(crate::services::smtp::Config::example());
-        let log = NotisNotificationService::LOG(crate::services::log::Config::example());
+        let smtp =
+            NotisNotificationService::SMTP(Box::new(crate::services::smtp::Config::example()));
+        let log = NotisNotificationService::LOG(Box::new(crate::services::log::Config::example()));
         Self {
             trace_filter: Some("debug".to_string()),
             port: DEFAULT_PORT,
