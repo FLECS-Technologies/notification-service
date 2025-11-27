@@ -1,6 +1,8 @@
 mod config;
 use crate::services::{Attachment, NotificationService};
 pub use config::*;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tracing::{error, info, info_span};
 
@@ -21,6 +23,8 @@ pub enum Error {
         "The total size limit of attachments ({limit}bytes) was exceeded (total size = {total}bytes"
     )]
     TotalAttachmentSizeLimitExceeded { limit: usize, total: usize },
+    #[error("The receiver group {group} is not configured")]
+    UnknownReceiverGroup { group: String },
 }
 
 impl From<Attachment> for lettre::message::SinglePart {
@@ -37,9 +41,29 @@ fn supports_feature(feature: &str, response: &lettre::transport::smtp::response:
         .any(|line| line.split_whitespace().next() == Some(feature))
 }
 
+#[derive(JsonSchema, Deserialize, Serialize)]
+pub struct NotificationOptions {
+    receivers: Vec<Mailbox>,
+    receiver_groups: Vec<String>,
+}
+
+impl NotificationOptions {
+    fn create_receiver_list(&self, config: &Config) -> Result<Vec<Mailbox>, Error> {
+        let mut receivers = self.receivers.clone();
+        for group in &self.receiver_groups {
+            receivers.extend_from_slice(config.receiver_groups.get(group).ok_or_else(|| {
+                Error::UnknownReceiverGroup {
+                    group: group.clone(),
+                }
+            })?)
+        }
+        Ok(receivers)
+    }
+}
+
 impl NotificationService for MailServer {
     type Config = config::Config;
-    type NotificationOptions = Vec<Mailbox>;
+    type NotificationOptions = NotificationOptions;
 
     fn send_notification(
         &self,
@@ -54,7 +78,10 @@ impl NotificationService for MailServer {
             title,
             content.map(str::to_string),
             attachments,
-            options.unwrap_or_else(|| config.receivers.clone()),
+            options
+                .map(|options| options.create_receiver_list(config))
+                .transpose()?
+                .unwrap_or_else(|| config.receivers.clone()),
         )?;
         Ok(())
     }
