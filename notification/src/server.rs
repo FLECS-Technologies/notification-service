@@ -67,7 +67,7 @@ impl Server {
         }
     }
 
-    pub fn config_writer(&self) -> ConfigWriter {
+    pub fn config_writer(&'_ self) -> ConfigWriter<'_> {
         let lock = self.config.write().unwrap_or_else(|e| e.into_inner());
         ConfigWriter {
             new_config: lock.deref().clone(),
