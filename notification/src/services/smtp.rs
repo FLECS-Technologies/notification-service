@@ -1,10 +1,14 @@
 mod config;
+
 use crate::services::{Attachment, NotificationService};
 pub use config::*;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::io::{Cursor, Write};
 use std::time::Duration;
 use tracing::{error, info, info_span};
+use zip::write::FileOptions;
+use zip::{AesMode, CompressionMethod, ZipWriter};
 
 #[derive(Default)]
 pub struct MailServer;
@@ -17,6 +21,10 @@ pub enum Error {
     Mail(#[from] lettre::error::Error),
     #[error(transparent)]
     Smtp(#[from] lettre::transport::smtp::Error),
+    #[error(transparent)]
+    Zip(#[from] zip::result::ZipError),
+    #[error(transparent)]
+    IO(#[from] std::io::Error),
     #[error("Failed to create encrypted tls connection")]
     Tls,
     #[error(
@@ -159,6 +167,36 @@ impl MailServer {
             server = config.server_url,
         )
         .entered();
+        let attachments = if let Some(password) = &config.encryption_password {
+            let buffer = Cursor::new(Vec::<u8>::new());
+            let mut zip = ZipWriter::new(buffer);
+
+            let options = FileOptions::<()>::default()
+                .compression_method(CompressionMethod::Deflated)
+                .with_aes_encryption(AesMode::Aes256, password);
+
+            for Attachment {
+                file_name,
+                file_content,
+                ..
+            } in attachments
+            {
+                // ZIP expects forward slashes for paths
+                let name = file_name.replace('\\', "/");
+
+                zip.start_file(name, options)?;
+                zip.write_all(&file_content)?;
+            }
+
+            let cursor = zip.finish()?;
+            vec![Attachment {
+                file_name: "attachments.zip".to_string(),
+                content_type: "application/zip".parse().unwrap(),
+                file_content: cursor.into_inner(),
+            }]
+        } else {
+            attachments
+        };
         if let Some(total_attachment_size_limit) = config.total_attachment_size_limit {
             let total_attachment_size: usize = attachments
                 .iter()
