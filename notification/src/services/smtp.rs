@@ -43,13 +43,19 @@ fn supports_feature(feature: &str, response: &lettre::transport::smtp::response:
 
 #[derive(JsonSchema, Deserialize, Serialize)]
 pub struct NotificationOptions {
-    receivers: Vec<Mailbox>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    receivers: Option<Vec<Mailbox>>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     receiver_groups: Vec<String>,
 }
 
 impl NotificationOptions {
     fn create_receiver_list(&self, config: &Config) -> Result<Vec<Mailbox>, Error> {
-        let mut receivers = self.receivers.clone();
+        let mut receivers = match &self.receivers {
+            None if self.receiver_groups.is_empty() => return Ok(config.receivers.clone()),
+            Some(receivers) => receivers.clone(),
+            _ => Vec::new(),
+        };
         for group in &self.receiver_groups {
             receivers.extend_from_slice(config.receiver_groups.get(group).ok_or_else(|| {
                 Error::UnknownReceiverGroup {
