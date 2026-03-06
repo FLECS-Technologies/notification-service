@@ -32,6 +32,13 @@ pub struct ConfigPatch {
     )]
     #[schemars(with = "Option<Option<usize>>")]
     pub total_attachment_size_limit: Option<Option<usize>>,
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        with = "::serde_with::rust::double_option"
+    )]
+    #[schemars(with = "Option<Option<String>>")]
+    pub encryption_password: Option<Option<String>>,
 }
 
 #[cfg(test)]
@@ -51,13 +58,13 @@ mod tests {
             receivers: None,
             receiver_groups: None,
             total_attachment_size_limit: None,
+            encryption_password: None,
         };
         assert_eq!(p, serde_json::from_str(s).unwrap());
         assert_eq!(s, serde_json::to_string(&p).unwrap());
 
         // Unset Value
-        let s =
-            r#"{"auth_mechanism":null,"receiver_groups":{},"total_attachment_size_limit":null}"#;
+        let s = r#"{"auth_mechanism":null,"receiver_groups":{},"total_attachment_size_limit":null,"encryption_password":null}"#;
         let p = ConfigPatch {
             server_url: None,
             credentials: None,
@@ -67,12 +74,13 @@ mod tests {
             receivers: None,
             receiver_groups: Some(HashMap::new()),
             total_attachment_size_limit: Some(None),
+            encryption_password: Some(None),
         };
         assert_eq!(p, serde_json::from_str(s).unwrap());
         assert_eq!(s, serde_json::to_string(&p).unwrap());
 
         // Existing Value
-        let s = r#"{"auth_mechanism":"Login","receiver_groups":{"gods":[{"name":"Zeus","email":"godfather@olympus.gr"},{"name":"Hera","email":"moon@olympus.gr"}]},"total_attachment_size_limit":100}"#;
+        let s = r#"{"auth_mechanism":"Login","receiver_groups":{"gods":[{"name":"Zeus","email":"godfather@olympus.gr"},{"name":"Hera","email":"moon@olympus.gr"}]},"total_attachment_size_limit":100,"encryption_password":"some_pw"}"#;
         let p = ConfigPatch {
             server_url: None,
             credentials: None,
@@ -94,6 +102,7 @@ mod tests {
                 ],
             )])),
             total_attachment_size_limit: Some(Some(100)),
+            encryption_password: Some(Some("some_pw".to_string())),
         };
         assert_eq!(p, serde_json::from_str(s).unwrap());
         assert_eq!(s, serde_json::to_string(&p).unwrap());

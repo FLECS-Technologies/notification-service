@@ -28,6 +28,8 @@ pub struct Config {
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub receiver_groups: HashMap<String, Vec<Mailbox>>,
     pub total_attachment_size_limit: Option<usize>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub encryption_password: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize, JsonSchema)]
@@ -100,6 +102,7 @@ impl Config {
                 ),
             ]),
             total_attachment_size_limit: Some(1024 * 1024 * 100),
+            encryption_password: Some("my_encryption_pw".to_string()),
         }
     }
 

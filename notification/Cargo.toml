@@ -19,3 +19,4 @@ notis_server = { path = "../notis_server", version = "0.1.0" }
 schemars = "1.0.1"
 serde_with = "3.13.0"
 erased-serde = "0.4.6"
+zip = "8.2"
