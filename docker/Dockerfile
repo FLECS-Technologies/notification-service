@@ -1,4 +1,6 @@
-FROM --platform=linux/amd64 flecspublic.azurecr.io/flecs-build AS base
+FROM rust:1.94 AS base
+
+ARG TARGET=x86_64-unknown-linux-gnu
 
 WORKDIR /base
 
@@ -9,16 +11,13 @@ COPY rust-toolchain.toml .
 ## This will install the toolchain and components from rust-toolchain.toml
 RUN rustup show
 
-## Targets have to be added additionally
-RUN rustup target add x86_64-unknown-linux-gnu
-RUN rustup target add aarch64-unknown-linux-gnu
-RUN rustup target add armv7-unknown-linux-gnueabihf
+## Target has to be added additionally
+RUN rustup target add $TARGET
 
 FROM base AS build
 
-ARG TARGET=x86_64-unknown-linux-gnu
 ARG BUILD_TYPE="debug"
-ENV CARGO_ARGS="--target ${TARGET} --path notis"
+ENV CARGO_ARGS="--locked --path notis"
 
 WORKDIR /src
 COPY . .
