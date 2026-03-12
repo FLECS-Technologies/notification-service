@@ -153,5 +153,8 @@ impl NotificationServiceConfig for Config {
         if let Some(receiver_groups) = patch.receiver_groups {
             self.receiver_groups = receiver_groups;
         }
+        if let Some(encryption_password) = patch.encryption_password {
+            self.encryption_password = encryption_password;
+        }
     }
 }
