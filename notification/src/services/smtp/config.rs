@@ -120,6 +120,7 @@ impl Config {
                 username,
                 "***".to_string(),
             ),
+            encryption_password: self.encryption_password.as_ref().map(|_| "***".to_string()),
             ..self.clone()
         }
     }
