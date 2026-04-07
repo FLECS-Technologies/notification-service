@@ -102,6 +102,42 @@ impl NotificationService for MailServer {
 }
 
 impl MailServer {
+    fn prepare_attachments(
+        attachments: Vec<Attachment>,
+        encryption_password: Option<&str>,
+    ) -> Result<Vec<Attachment>, Error> {
+        if !attachments.is_empty()
+            && let Some(password) = encryption_password
+        {
+            let buffer = Cursor::new(Vec::<u8>::new());
+            let mut zip = ZipWriter::new(buffer);
+
+            let options = FileOptions::<()>::default()
+                .compression_method(CompressionMethod::Deflated)
+                .with_aes_encryption(AesMode::Aes256, password);
+
+            for Attachment {
+                file_name,
+                file_content,
+                ..
+            } in attachments
+            {
+                let name = file_name.replace('\\', "/");
+                zip.start_file(name, options)?;
+                zip.write_all(&file_content)?;
+            }
+
+            let cursor = zip.finish()?;
+            Ok(vec![Attachment {
+                file_name: "attachments.zip".to_string(),
+                content_type: "application/zip".parse().unwrap(),
+                file_content: cursor.into_inner(),
+            }])
+        } else {
+            Ok(attachments)
+        }
+    }
+
     fn tls_connect(
         client_id: &lettre::transport::smtp::extension::ClientId,
         tls: &lettre::transport::smtp::client::TlsParameters,
@@ -167,36 +203,8 @@ impl MailServer {
             server = config.server_url,
         )
         .entered();
-        let attachments = if let Some(password) = &config.encryption_password {
-            let buffer = Cursor::new(Vec::<u8>::new());
-            let mut zip = ZipWriter::new(buffer);
-
-            let options = FileOptions::<()>::default()
-                .compression_method(CompressionMethod::Deflated)
-                .with_aes_encryption(AesMode::Aes256, password);
-
-            for Attachment {
-                file_name,
-                file_content,
-                ..
-            } in attachments
-            {
-                // ZIP expects forward slashes for paths
-                let name = file_name.replace('\\', "/");
-
-                zip.start_file(name, options)?;
-                zip.write_all(&file_content)?;
-            }
-
-            let cursor = zip.finish()?;
-            vec![Attachment {
-                file_name: "attachments.zip".to_string(),
-                content_type: "application/zip".parse().unwrap(),
-                file_content: cursor.into_inner(),
-            }]
-        } else {
-            attachments
-        };
+        let attachments =
+            Self::prepare_attachments(attachments, config.encryption_password.as_deref())?;
         if let Some(total_attachment_size_limit) = config.total_attachment_size_limit {
             let total_attachment_size: usize = attachments
                 .iter()
@@ -276,5 +284,79 @@ impl MailServer {
             info!("... Ok");
             Ok(())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_attachment(name: &str, content: &[u8]) -> Attachment {
+        Attachment {
+            file_name: name.to_string(),
+            content_type: "application/octet-stream".parse().unwrap(),
+            file_content: content.to_vec(),
+        }
+    }
+
+    // No encryption, no attachments → empty Vec, no ZIP produced
+    #[test]
+    fn no_encryption_no_attachments() {
+        let result = MailServer::prepare_attachments(vec![], None).unwrap();
+        assert!(result.is_empty());
+    }
+
+    // No encryption, some attachments → original attachments passed through unchanged
+    #[test]
+    fn no_encryption_with_attachments() {
+        let attachments = vec![
+            make_attachment("a.txt", b"hello"),
+            make_attachment("b.txt", b"world"),
+        ];
+        let result = MailServer::prepare_attachments(attachments, None).unwrap();
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].file_name, "a.txt");
+        assert_eq!(result[0].file_content, b"hello");
+        assert_eq!(result[1].file_name, "b.txt");
+        assert_eq!(result[1].file_content, b"world");
+    }
+
+    // Encryption set, no attachments → empty Vec, no ZIP produced
+    #[test]
+    fn with_encryption_no_attachments() {
+        let result = MailServer::prepare_attachments(vec![], Some("secret")).unwrap();
+        assert!(
+            result.is_empty(),
+            "expected no output attachments when input is empty, even with encryption configured"
+        );
+    }
+
+    // Encryption set, some attachments → single ZIP attachment containing all files
+    #[test]
+    fn with_encryption_with_attachments() {
+        let attachments = vec![
+            make_attachment("report.txt", b"report content"),
+            make_attachment("data.csv", b"col1,col2\n1,2"),
+        ];
+        let result = MailServer::prepare_attachments(attachments, Some("secret")).unwrap();
+
+        assert_eq!(result.len(), 1);
+        let zip_attachment = &result[0];
+        assert_eq!(zip_attachment.file_name, "attachments.zip");
+        assert_eq!(
+            zip_attachment.content_type,
+            "application/zip".parse().unwrap()
+        );
+
+        // Verify the ZIP is valid and contains the expected files
+        let cursor = Cursor::new(zip_attachment.file_content.clone());
+        let mut archive = zip::ZipArchive::new(cursor).expect("output should be a valid ZIP");
+        assert_eq!(archive.len(), 2);
+
+        let mut names: Vec<String> = (0..archive.len())
+            .map(|i| archive.by_index_raw(i).unwrap().name().to_string())
+            .collect();
+        names.sort();
+        assert_eq!(names, ["data.csv", "report.txt"]);
     }
 }
