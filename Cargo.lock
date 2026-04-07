@@ -1342,7 +1342,7 @@ dependencies = [
 
 [[package]]
 name = "notification"
-version = "0.5.1"
+version = "0.5.3"
 dependencies = [
  "axum",
  "axum-extra",
@@ -1361,7 +1361,7 @@ dependencies = [
 
 [[package]]
 name = "notis"
-version = "0.5.1"
+version = "0.5.3"
 dependencies = [
  "anyhow",
  "async-signal",
